@@ -4,11 +4,8 @@
 
 *Persist memory to disk like Manus, execute in small steps like TDD.*
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Shell](https://img.shields.io/badge/-Shell-4EAA25?logo=gnu-bash&logoColor=white)
-![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white)
-![Python](https://img.shields.io/badge/-Python-3776AB?logo=python&logoColor=white)
-![Markdown](https://img.shields.io/badge/-Markdown-000000?logo=markdown&logoColor=white)
+[![Claude Code Skill](https://img.shields.io/badge/Claude_Code-Skill-blue)](https://claude.com/claude-code)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 > **Claude-Code-Skill** | **Manus-Style** | **MIT License** | **TDD-Driven** | **Hook-Powered** | **Disk-Persistent**
 
@@ -208,20 +205,11 @@ Plan-For-All is responsible for **never losing direction, never stopping in smal
 
 Load plan-for-all skill in Claude Code:
 
-```
-/skill plan-for-all
-```
+Download and extract the project, place it in the ~/.claude/skills directory.
 
-Or configure in settings.json:
-
-```json
-{
-  "plugins": {
-    "skills": [
-      "plan-for-all"
-    ]
-  }
-}
+Invoke with:
+```
+/plan-for-all
 ```
 
 ---

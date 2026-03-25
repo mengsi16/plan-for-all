@@ -4,11 +4,8 @@
 
 *像 Manus 一样用文件持久化记忆，像 TDD 一样用小步执行。*
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Shell](https://img.shields.io/badge/-Shell-4EAA25?logo=gnu-bash&logoColor=white)
-![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white)
-![Python](https://img.shields.io/badge/-Python-3776AB?logo=python&logoColor=white)
-![Markdown](https://img.shields.io/badge/-Markdown-000000?logo=markdown&logoColor=white)
+[![Claude Code Skill](https://img.shields.io/badge/Claude_Code-Skill-blue)](https://claude.com/claude-code)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 > **Claude-Code-Skill** | **Manus-Style** | **MIT License** | **TDD-Driven** | **Hook-Powered** | **Disk-Persistent**
 
