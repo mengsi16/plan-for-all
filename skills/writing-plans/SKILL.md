@@ -92,13 +92,16 @@ description: "将设计文档转化为可执行的实现计划 — 产出 detail
 
 ### 生成 task_plan.md
 
-汇总所有 Phase 和 Step 的元信息，生成统筹视图：
+汇总所有 Phase 和 Step 的元信息，生成统筹视图，保存到 `docs/plan-for-all/task_plan.md`：
 
 ---
 
 ## Step 4: 生成辅助文件
 
-创建 `findings.md` 和 `progress.md`：
+创建辅助文件到 `docs/plan-for-all/` 目录：
+
+- `docs/plan-for-all/findings.md`
+- `docs/plan-for-all/progress.md`
 
 **findings.md:**
 ```markdown
@@ -128,14 +131,15 @@ description: "将设计文档转化为可执行的实现计划 — 产出 detail
 
 ## Step 5: 等待用户确认
 
-> "计划已生成并保存到 `task_plan.md`。
+> "计划已生成并保存到 `docs/plan-for-all/task_plan.md`。
 >
 > 文件结构：
 > - `docs/plan-for-all/specs/` — 设计文档
 > - `docs/plan-for-all/plans/` — 实现计划详情
-> - `task_plan.md` — 统筹视图
-> - `findings.md` — 研究发现
-> - `progress.md` — 进度日志
+> - `docs/plan-for-all/plans/step_subplans/` — Phase 子计划
+> - `docs/plan-for-all/task_plan.md` — 统筹视图
+> - `docs/plan-for-all/findings.md` — 研究发现
+> - `docs/plan-for-all/progress.md` — 进度日志
 >
 > 说"开始执行"我将通过 TDD 循环逐步实现。"
 >
