@@ -6,8 +6,11 @@
 
 [![Claude Code Skill](https://img.shields.io/badge/Claude_Code-Skill-blue)](https://claude.com/claude-code)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![superpowers](https://img.shields.io/badge/superpowers-TDD%20%26%20PM-red)](https://github.com/obra/superpowers)
+[![planning-with-files](https://img.shields.io/badge/planning--with--files-Manus%20Style-orange)](https://github.com/OthmanAdi/planning-with-files)
+[![ui-ux-pro-max](https://img.shields.io/badge/ui--ux--pro--max-Frontend%20Design-purple)](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
 
-> **Claude-Code-Skill** | **Manus-Style** | **MIT License** | **TDD-Driven** | **Hook-Powered** | **Disk-Persistent**
+> **Claude-Code-Skill** | **superpowers (TDD & PM)** | **planning-with-files (Manus Style)** | **ui-ux-pro-max (Frontend Design)** | **MIT License**
 
 </div>
 
@@ -245,8 +248,9 @@ At the start of each session, quickly recover context using these five questions
 
 Plan-For-All was made possible by these open source projects:
 
-- **[superpowers](https://github.com/Cluade-code/superpowers)** — Provided the powerful brainstorming and writing-plans skill system, making requirements exploration and plan generation systematic
-- **[planning-with-files](https://github.com/ClaudiaAI/Claudia)** — The Manus philosophy — persisting plans to disk — is the source of Plan-For-All's core philosophy
+- **[superpowers](https://github.com/obra/superpowers)** — Provided the powerful brainstorming and writing-plans skill system, making requirements exploration and plan generation systematic
+- **[planning-with-files](https://github.com/OthmanAdi/planning-with-files)** — The Manus philosophy — persisting plans to disk — is the source of Plan-For-All's core philosophy
+- **[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)** — Provided professional frontend design intelligence with 50+ styles, 161 color palettes, UX guidelines, and more — powering Phase 2 frontend design convergence
 
 Special thanks to the Manus project for its core insight: **keep context for what really matters, let disk handle the plan.**
 
