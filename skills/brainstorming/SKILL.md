@@ -164,7 +164,7 @@ Phase 1 完成后，询问用户：
 
 **触发条件：** 用户选择进入 Phase 2
 
-**前置准备：** 读取 `skills/brainstorming/skills/ui-ux-pro-max/SKILL.md` 获取 UI/UX 设计系统
+**前置准备：** 读取 `skills/ui-ux-pro-max/SKILL.md` 获取 UI/UX 设计系统
 
 ---
 
@@ -182,12 +182,12 @@ Phase 1 完成后，询问用户：
 使用 ui-ux-pro-max 的 `--design-system` 生成完整设计系统：
 
 ```bash
-python3 skills/brainstorming/skills/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <风格关键词>" --design-system [-p "项目名称"]
+python3 skills/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <风格关键词>" --design-system [-p "项目名称"]
 ```
 
 **示例：**
 ```bash
-python3 skills/brainstorming/skills/ui-ux-pro-max/scripts/search.py "fintech dashboard modern dark" --design-system -p "Finance App"
+python3 skills/ui-ux-pro-max/scripts/search.py "fintech dashboard modern dark" --design-system -p "Finance App"
 ```
 
 **输出包含：**
@@ -205,13 +205,13 @@ python3 skills/brainstorming/skills/ui-ux-pro-max/scripts/search.py "fintech das
 
 ```bash
 # 查询 UX 最佳实践
-python3 skills/brainstorming/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain ux [-n <数量>]
+python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain ux [-n <数量>]
 
 # 查询配色方案
-python3 skills/brainstorming/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain color [-n <数量>]
+python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain color [-n <数量>]
 
 # 查询字体搭配
-python3 skills/brainstorming/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain typography [-n <数量>]
+python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain typography [-n <数量>]
 ```
 
 ---
