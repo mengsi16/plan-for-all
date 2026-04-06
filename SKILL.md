@@ -1,35 +1,44 @@
 ---
 name: plan-for-all
 description: |
-  自包含的项目规划技能，包含三个阶段：
-  1. Brainstorming — 需求探索与设计
-  2. Writing Plans — 计划生成
-  3. Execute — TDD 驱动执行 + Hook 护航
-  支持文件持久化、上下文恢复、多步骤任务跟踪。
+  Use when a task needs a persistent, file-backed planning workflow across design, implementation planning, and execution in the current project.
+  包含以下子 skills：
+  1. brainstorming — customer-facing requirement convergence before implementation planning, especially when goals, scope, success criteria, or product boundaries are still unclear
+  2. writing-plans — convert an approved design contract into an executable implementation plan with smoke checks, verification steps, and persistent status files
+  3. step-decomposition — derive execution-focused subplans that highlight the active objective, verification steps, exit criteria, and active blockers without copying the whole plan
+  4. tech-knowledge-audit — verify unstable, unfamiliar, recently-evolving, or semantically ambiguous technical knowledge before the plan relies on it
+  5. test-driven-development — implement any feature or bugfix before writing implementation code
+  6. ui-ux-pro-max — UI/UX design intelligence for Web and mobile design, review, optimization, and implementation work
 user-invocable: true
 allowed-tools: "Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskUpdate, Agent"
 hooks:
   UserPromptSubmit:
     - hooks:
         - type: command
-          command: "if [ -f task_plan.md ]; then echo '[plan-for-all] 检测到活跃计划。请读取 task_plan.md、progress.md 和 findings.md 恢复上下文。'; fi"
+          command: |
+            if [ -f docs/plan-for-all/task_plan.md ]; then
+              echo '[plan-for-all] 检测到活跃计划。先读取 docs/plan-for-all/task_plan.md、docs/plan-for-all/findings.md、docs/plan-for-all/progress.md 恢复上下文。';
+            fi
   PreToolUse:
     - matcher: "Read|Glob|Grep"
       hooks:
         - type: command
-          command: "if [ -f task_plan.md ]; then echo '[plan-for-all] === 当前 task_plan.md ==='; cat task_plan.md 2>/dev/null | head -60; fi"
+          command: |
+            if [ -f docs/plan-for-all/task_plan.md ]; then
+              echo '[plan-for-all] === 当前 task_plan.md 摘要 ===';
+              head -60 docs/plan-for-all/task_plan.md 2>/dev/null;
+            fi
     - matcher: "Bash|Edit|Write"
       hooks:
         - type: command
           command: |
-            if grep -q 'in_progress' task_plan.md 2>/dev/null; then
-              CURRENT_SUBPLAN=$(grep -A2 'in_progress' task_plan.md | grep 'step_subplan' | head -1 | sed 's/.*[\(\)\[\]]*\([step_subplan^]*\)[\)\]\`].*/\1/' | tr -d '`');
+            if [ -f docs/plan-for-all/task_plan.md ]; then
+              echo '[plan-for-all] === 当前执行上下文 ===';
+              grep -nE 'Current Phase|Active Step|Current Step|Next Action|in_progress|Knowledge Blockers|External Knowledge Status|Recheck Required' docs/plan-for-all/task_plan.md 2>/dev/null || head -40 docs/plan-for-all/task_plan.md 2>/dev/null;
+              CURRENT_SUBPLAN=$(grep -oE 'docs/plan-for-all/plans/step_subplans/[^` )]+\.md' docs/plan-for-all/task_plan.md 2>/dev/null | head -1);
               if [ -n "$CURRENT_SUBPLAN" ] && [ -f "$CURRENT_SUBPLAN" ]; then
-                echo '[plan-for-all] === 当前执行 Step ===';
-                cat "$CURRENT_SUBPLAN" 2>/dev/null | head -80;
-              else
-                echo '[plan-for-all] === 当前 task_plan.md 状态 ===';
-                grep -B2 -A5 'in_progress' task_plan.md 2>/dev/null;
+                echo '[plan-for-all] === 当前 step_subplan 摘要 ===';
+                head -80 "$CURRENT_SUBPLAN" 2>/dev/null;
               fi
             fi
   PostToolUse:
@@ -37,221 +46,239 @@ hooks:
       hooks:
         - type: command
           command: |
-            if echo "$FILE" 2>/dev/null | grep -q "docs/plan-for-all/plans/.*detail.md$"; then
-              echo '[plan-for-all] 检测到 detail plan 已更新';
-              echo '[plan-for-all] 请对每个 Phase 调用 step-decomposition skill 提取 step_subplan';
-              echo '[plan-for-all] 然后汇总生成 task_plan.md';
+            if echo "$FILE" 2>/dev/null | grep -q 'docs/plan-for-all/plans/.*detail\.md$'; then
+              echo '[plan-for-all] 检测到 detail plan 已更新。必须重新提取 step_subplans，并同步 docs/plan-for-all/task_plan.md。';
             fi
-            if [ -f task_plan.md ]; then
-              echo '[plan-for-all] task_plan.md 已更新，请更新 progress.md 记录本次操作';
+            if echo "$FILE" 2>/dev/null | grep -q 'docs/plan-for-all/task_plan\.md$'; then
+              echo '[plan-for-all] 检测到 task_plan.md 已更新。请追加 docs/plan-for-all/progress.md 事实日志。';
             fi
+            echo '[plan-for-all] 保底提醒：发生文件写入/编辑后，必须对照 skills/test-driven-development/SKILL.md 执行测试优先与验证步骤，并检查是否引入了新的 audit item。';
     - matcher: "Bash"
       hooks:
         - type: command
           command: |
-            if echo "$CURRENT_COMMAND" 2>/dev/null | grep -q "git commit"; then
-              DATE=$(date '+%Y-%m-%d %H:%M');
-              echo -e "\n## $DATE - 提交完成" >> progress.md;
-              echo '```bash' >> progress.md;
-              echo "$CURRENT_COMMAND" >> progress.md 2>/dev/null || true;
-              echo '```' >> progress.md;
+            if echo "$CURRENT_COMMAND" 2>/dev/null | grep -Eq '(cat >|tee |>>|>|sed -i|perl -i|python .*write|node .*write|touch |mkdir |cp |mv |rm |git apply|patch )'; then
+              echo '[plan-for-all] 检测到 Bash 可能修改文件。必须立即检查是否需要先写失败测试、再实现、再验证，并确认没有新增未登记的高风险术语或外部依赖。';
             fi
   Stop:
     - hooks:
         - type: command
           command: |
-            SD="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/superpowers/5.0.2/skills/step-planning/scripts}";
-            if [ -f "task_plan.md" ]; then
-              echo '[plan-for-all] 会话即将结束，检查任务完成状态...';
-              COMPLETE=$(grep -c '\[x\]' task_plan.md 2>/dev/null || echo 0);
-              TOTAL=$(grep -c '\- \[' task_plan.md 2>/dev/null || echo 0);
-              echo "进度: $COMPLETE / $TOTAL 个 Step 完成";
-              if [ "$COMPLETE" = "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
-                echo '[plan-for-all] 所有 Step 已完成！';
-              fi
+            if [ -f docs/plan-for-all/task_plan.md ]; then
+              echo '[plan-for-all] 会话结束前请确认 docs/plan-for-all/task_plan.md 是最新状态源，并把本轮事实追加到 docs/plan-for-all/progress.md。';
             fi
 ---
 
-# Plan-For-All — 自包含项目规划系统
+# Plan-For-All
 
-像 Manus 一样用文件持久化记忆，像 TDD 一样用小步执行。
+A file-backed workflow for multi-step work that needs continuity across sessions.
 
-## 三大阶段
+This skill is for disciplined planning and execution. Hooks remain in place as fallback guardrails for session recovery and discipline reminders, but the workflow still depends on the plan content and execution steps being correct.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Phase 1: BRAINSTORMING                                 │
-│  需求探索 → 逐个提问 → 方案推荐 → 设计确认                 │
-│  产出: docs/plan-for-all/specs/YYYY-MM-DD-*-design.md   │
-│  技能: skills/brainstorming/SKILL.md                    │
-├─────────────────────────────────────────────────────────┤
-│  Phase 2: WRITING PLANS                                 │
-│  设计文档 → detail_plan.md → step_decomposition → task_plan.md
-│  产出: task_plan.md, findings.md, progress.md           │
-│  技能: skills/writing-plans/SKILL.md                    │
-├─────────────────────────────────────────────────────────┤
-│  Phase 3: EXECUTE                                       │
-│  TDD RED-GREEN-REFACTOR → Hook 护航 → 逐步完成           │
-│  PreToolUse Hook → 自动读取当前 step                     │
-│  PostToolUse Hook → 自动更新状态                         │
-└─────────────────────────────────────────────────────────┘
-```
+## When To Use
 
----
+Use this skill when:
+- the task is large enough to need design, planning, and execution artifacts on disk
+- the work may span multiple sessions
+- you need a stable source of truth for scope, status, decisions, and risks
+- the project needs explicit checkpoints before implementation
 
-## 第一步：检查上下文
+Do not use this skill for tiny one-off edits that do not need persistent planning state.
 
-**每次会话开始时**，检查是否存在 `task_plan.md`：
+## Core Model
 
-```bash
-if [ -f task_plan.md ]; then
-  # 读取规划文件恢复上下文
-  cat task_plan.md
-  cat findings.md
-  cat progress.md
-fi
-```
+The workflow has three phases:
 
-根据是否有 `task_plan.md` 决定进入哪个阶段：
-- **无 task_plan.md** → Phase 1 (Brainstorming)
-- **有 task_plan.md，无 in_progress** → Phase 2 (Writing Plans) 或等待用户说"开始执行"
-- **有 task_plan.md，有 in_progress** → Phase 3 (Execute)
+1. **Brainstorming**: converge customer-facing requirements into an approved design
+2. **Writing Plans**: turn the contract into an executable plan
+3. **Execute**: implement against the plan and keep status honest
 
----
+Each phase has one job. Do not mix them.
 
-## Phase 1: Brainstorming
+## Full-Lifecycle Audit Model
 
-**触发词：** "设计一个 X"、"规划一个项目"、"帮我梳理需求"
+Audit is not a one-time research step. It is a cross-cutting mechanism that stays active through brainstorming, planning, decomposition, execution, and completion.
 
-**执行：**
-1. 读取 `skills/brainstorming/SKILL.md` 获取详细流程
-2. 检查项目上下文（现有文件、git 历史）
-3. 逐个提问收敛需求
-4. 提出 2-3 个方案并推荐
-5. 呈现设计方案，获得用户分步批准
-6. 将设计文档写入 `docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`
-7. 完成后提示用户进入 Planning 阶段
+Every phase must do two things:
+- inherit current audit state from `docs/plan-for-all/findings.md` and `docs/plan-for-all/task_plan.md`
+- register new high-risk terminology or unstable external claims when they appear
 
-**产出：**
-- `docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`
+Audit also sits above phase-local questioning behavior:
+- if a high-risk term, provider claim, protocol claim, compatibility claim, or recent paradigm would materially affect the next clarifying question, the next proposed approach, or the next design assumption, verify it first
+- do not ask the user to settle public technical facts that authoritative sources can verify
+- ask the user only after audit when the remaining uncertainty is project-specific, preference-specific, or private-context-specific
 
----
+Typical audit states are:
+- `new`
+- `needs_verification`
+- `high_risk_terminology`
+- `verified_official`
+- `verified_recent`
+- `project_specific_ask_user`
+- `unresolved`
+- `stale_recheck_required`
 
-## Phase 2: Writing Plans
+## Source Of Truth
 
-**触发词：** "开始规划"、"写计划"、"制定实现方案"
+`docs/plan-for-all/task_plan.md` is the only canonical progress tracker.
 
-**执行：**
-1. 读取 `skills/writing-plans/SKILL.md` 获取详细流程
-2. 读取设计文档
-3. 创建 `detail_plan.md`（完整实现计划）
-4. 对每个 Phase 调用 `step-decomposition` skill 提取 `step_subplan_*.md`，汇总生成 `task_plan.md`
-5. 创建 `findings.md` 和 `progress.md`
-6. 告知用户计划已就绪，等待"开始执行"
+File roles:
+- `docs/plan-for-all/task_plan.md`: current status, phases, active step, pending work, blockers, recheck-required items
+- `docs/plan-for-all/findings.md`: decisions, assumptions, risks, research findings, unresolved questions, and the audit register
+- `docs/plan-for-all/progress.md`: append-only factual log of what happened
+- `docs/plan-for-all/specs/*.md`: approved design contracts
+- `docs/plan-for-all/plans/*.md`: implementation plans
+- `docs/plan-for-all/plans/step_subplans/*.md`: execution views derived from the plan
 
-**产出：**
-- `docs/plan-for-all/plans/YYYY-MM-DD-<feature>-detail.md`
-- `docs/plan-for-all/plans/step_subplans/step_subplan_phase*.md`
-- `task_plan.md`
-- `findings.md`
-- `progress.md`
+Never declare authoritative completion state in `findings.md` or `progress.md`.
 
----
+## Session Start
 
-## Phase 3: Execute
+At the start of work:
 
-**触发词：** "开始执行"、"开始写代码"、"开始实现"
+1. Check whether `docs/plan-for-all/task_plan.md` exists.
+2. If it exists, read:
+   - `docs/plan-for-all/task_plan.md`
+   - `docs/plan-for-all/findings.md`
+   - `docs/plan-for-all/progress.md`
+3. Use `task_plan.md` to determine the active phase, active step, unresolved knowledge blockers, and recheck-required items.
 
-**执行：**
-1. 读取 `task_plan.md` 找到 `in_progress` 的 Phase
-2. 读取对应的 `step_subplan_*.md`
-3. 按 TDD 循环执行每个 Step：
-   - **RED**: 写一个失败的测试
-   - **GREEN**: 实现最小代码让测试通过
-   - **REFACTOR**: 清理代码
-   - 提交（可选）
-4. Step 完成后，更新 `task_plan.md` 状态
-5. 重复直到所有 Phase 完成
+Routing:
+- no `task_plan.md`: start with `skills/brainstorming/SKILL.md`
+- `task_plan.md` exists but no approved implementation plan: use `skills/writing-plans/SKILL.md`
+- approved plan exists and user wants implementation: execute from `task_plan.md` and `step_subplan`
 
-**Hook 机制：**
-- **PreToolUse Hook**: 每次执行 Bash/Edit/Write 前，自动读取当前 step_subplan
-- **PostToolUse Hook**: 每次写入后，自动提示更新 task_plan.md
+## Phase Rules
 
----
+### Phase 1: Brainstorming
 
-## 文件结构
+Use `skills/brainstorming/SKILL.md`.
 
-```
-project/
-├── task_plan.md              # 统筹视图（Hook 自动读取）
-├── findings.md               # 研究发现
-├── progress.md               # 进度日志
-├── docs/
-│   └── plan-for-all/
-│       ├── specs/            # 设计文档
-│       │   └── YYYY-MM-DD-*-design.md
-│       └── plans/            # 实现计划
-│           ├── YYYY-MM-DD-*-detail.md
-│           └── step_subplans/
-│               └── step_subplan_phase*.md
-└── [项目代码文件]
-```
+Required output:
+- problem statement
+- goals
+- non-goals
+- constraints
+- acceptance criteria
+- risks and open questions
+- approved design doc path
+- audit-sensitive terms and external claims that planning must verify before relying on them
 
----
+Phase 1 audit gate:
+- before asking the next convergence question, check whether the question depends on unresolved external technical meaning
+- if it does, invoke `skills/tech-knowledge-audit/SKILL.md` immediately and feed the verified result back into brainstorming
+- do not continue requirement convergence as if a public provider/protocol/framework fact were a user preference choice
 
-## 五问恢复测试
+If the converged design includes a user-visible interface whose structure or visual quality needs dedicated refinement, Phase 1 may invoke `skills/ui-ux-pro-max/SKILL.md` as a subordinate support step before the final design doc is written. Brainstorming still owns the design doc and the customer-facing convergence flow.
 
-| 问题 | 答案来源 |
-|------|---------|
-| 我在哪里？ | `task_plan.md` 中的当前 Phase + `step_subplan_*.md` |
-| 我要去哪里？ | `task_plan.md` 剩余 Phase 列表 |
-| 目标是什么？ | `task_plan.md` 的 Goal 声明 |
-| 我学到了什么？ | `findings.md` |
-| 我要做什么？ | 当前 `step_subplan_*.md` 的当前 Step |
+Do not start writing implementation plans until the design contract is explicit enough that someone can tell whether later work matches it.
 
----
+### Phase 2: Writing Plans
 
-## 核心规则
+Use `skills/writing-plans/SKILL.md`.
 
-| 规则 | 说明 |
-|------|------|
-| 先创建计划 | 永远不要在没有 `task_plan.md` 的情况下执行复杂任务 |
-| 两步操作规则 | 每 2 次查看/搜索操作后，保存关键发现到文件 |
-| 决策前先读 | 做重大决策前，读取计划文件 |
-| 行动后更新 | 完成阶段后标记状态，记录错误 |
-| 记录所有错误 | 在 `progress.md` 中记录错误和解决方案 |
-| 永不重复失败 | 失败后换方案，不重复同样的失败操作 |
+Required output:
+- a detail plan organized by phases or workstreams
+- a smoke-check strategy
+- explicit verification commands
+- step subplans extracted for execution
+- `task_plan.md` initialized from the plan
+- `findings.md` and `progress.md` initialized with correct responsibilities
 
----
+Do not fill the plan with speculative implementation code. Plans should constrain behavior and verification, not pre-write the whole feature.
 
-## 三次失败协议
+### Phase 3: Execute
 
-```
-第1次: 诊断并修复
-第2次: 替代方案
-第3次: 重新思考
-3次后: 向用户求助
-```
+Execution must follow the current `task_plan.md` and active `step_subplan`.
 
----
+Execution rules:
+- before changing code, confirm the active step and its acceptance condition
+- for feature or bugfix work, use the local `skills/test-driven-development/SKILL.md`
+- for failures and unexpected behavior, perform root-cause analysis before patching
+- after each completed step, update `task_plan.md` first, then append facts to `progress.md`
+- when a plan step is unclear or contradicted by reality, stop and repair the plan before continuing
+- when unresolved knowledge blockers still affect the active step, resolve or surface them before implementation relies on them
+- when new suspicious terminology or changed external behavior appears during execution, update the audit register instead of silently improvising
 
-## Skill 结构
+Hooks are not the only enforcement mechanism. If the workflow requires TDD or terminology verification, the plan and execution steps must say so explicitly, and hooks act as a last-line reminder when context is compressed or drift appears.
 
-```
-plan-for-all/
-├── SKILL.md                  # 本文件（主技能入口）
-├── skills/
-│   ├── brainstorming/        # 需求探索阶段
-│   │   └── SKILL.md
-│   ├── writing-plans/       # 计划生成阶段
-│   │   └── SKILL.md
-│   └── step-decomposition/  # 子任务分解（LLM 提取 step_subplan）
-│       └── SKILL.md
-├── scripts/
-│   └── session-catchup.py    # 会话恢复
-└── templates/
-    ├── task_plan.md
-    ├── step_subplan.md
-    ├── findings.md
-    └── progress.md
-```
+## External Knowledge Rule
+
+Any external knowledge that could affect planning correctness defaults to verification before the workflow depends on it.
+
+This includes:
+- new or unfamiliar terminology
+- old terms whose meaning may have drifted
+- recent engineering paradigms or agent patterns
+- provider, API, SDK, protocol, framework, or compatibility claims
+- anything the user implicitly uses in a specialized meaning that is easy to misread
+
+Official sources come first when they exist. If no official source exists, use recent high-quality sources and record the recency and remaining uncertainty.
+
+This rule applies before:
+- asking a user-facing convergence question whose framing depends on the term or claim
+- presenting 2-3 approaches whose trade-offs depend on the term or claim
+- writing a design or plan section that assumes the term or claim is settled
+
+Do not turn externally verifiable facts into user questionnaires just because the workflow is currently in brainstorming.
+
+Do not continue any phase as if the term or claim is settled when verification is still missing.
+
+## Recheck Triggers
+
+Previously verified knowledge must be rechecked when any of these happen:
+- a later phase depends on a deeper or more specific meaning than earlier phases used
+- execution evidence conflicts with the earlier audit result
+- the topic is fast-moving and the previous source is no longer recent enough
+- a new version, provider behavior, SDK behavior, or compatibility claim appears
+- the user explicitly asks for the latest or current meaning
+
+When recheck is required, mark the item `stale_recheck_required` until it is verified again or explicitly downgraded.
+
+## Required Behaviors
+
+- **Contract before plan**: no implementation planning without a design contract
+- **Smoke test first**: every non-trivial plan must begin with a minimal reproduction or smoke check
+- **Test before implementation**: do not treat TDD as an optional later pass
+- **Verify external knowledge before dependence**: if a term, technology, or claim matters to correctness, verify it first
+- **Verify before the next question when needed**: if the next brainstorming question would be distorted by unresolved external knowledge, audit before asking
+- **Official sources first**: use official documentation and official change surfaces before non-official material
+- **Recent sources for evolving topics**: for new or drifting topics, stale sources are not enough
+- **Audit across the full lifecycle**: new suspicious terms must be registered no matter which phase reveals them
+- **Single source of truth**: status lives in `task_plan.md`
+- **Reality over paperwork**: if artifacts disagree, trust fresh verification evidence and repair the docs
+- **No false completion**: do not mark phases complete without verification evidence
+- **Hook as fallback guardrail**: keep hooks for recovery and reminder pressure, but never rely on them alone
+
+## Child Skills
+
+- `skills/brainstorming/SKILL.md`: customer-facing requirement convergence and early audit intake
+- `skills/writing-plans/SKILL.md`: implementation handoff and executable plan generation
+- `skills/step-decomposition/SKILL.md`: execution-view extraction with blocker carry-forward
+- `skills/tech-knowledge-audit/SKILL.md`: verification of unstable, unfamiliar, or semantically risky technical knowledge
+- `skills/test-driven-development/SKILL.md`: implementation discipline
+
+## Anti-Patterns
+
+Do not do these:
+- summarize the workflow in metadata and expect the body to fix it
+- treat reminders as sufficient on their own
+- generate status files that can contradict each other
+- copy large speculative code blocks into plans by default
+- use subplans as raw duplicates of detail plans
+- claim TDD is mandatory while sequencing it after implementation-shaped planning
+- remove hook guardrails and assume the body alone will always survive context compression
+- treat new or high-risk terminology as settled without current-source verification
+- use stale third-party material as current truth for evolving topics
+- assume the audit done in one phase automatically covers later, deeper dependencies
+
+## Completion Condition
+
+The workflow is healthy only if all of the following are true:
+- the current phase is obvious from `task_plan.md`
+- active work and blockers are visible in one place
+- findings, progress, and status do not contradict each other
+- the current step includes verification, not just implementation intent
+- unresolved or recheck-required external knowledge is visible instead of hidden
+- execution can resume in a later session without reconstructing hidden context
+

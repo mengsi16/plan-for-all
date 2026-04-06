@@ -1,65 +1,32 @@
-# Phase N: [阶段名称] — Step Subplan
+﻿# Phase N: [Name] — Step Subplan
 
-> **关联 task_plan:** Phase N
+> Source: `docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
+> Required Skill: Invoke `plan-for-all:test-driven-development` before executing the detailed steps below.
 
-## Step N.1: [功能块名称]
+**Objective:** [phase objective]
+**Mode:** [Greenfield | Bugfix | Refactor]
 
-**文件：**
-- Create: `src/xxx.ts`
-- Modify: `src/yyy.ts:1-50`
-- Test: `tests/xxx.test.ts`
+## Files In Scope
 
-### TDD 循环
+- Create:
+- Modify:
+- Test:
 
-- [ ] **RED: 写一个失败的测试**
+## Baseline Check
 
-```typescript
-test('[功能描述]', async () => {
-  // 测试代码
-});
-```
+Run: `[command]`
+Expected: `[current behavior or expected failure]`
 
-- [ ] **GREEN: 运行测试验证失败，然后写最小代码**
+## Execution Steps
 
-```bash
-npm test tests/xxx.test.ts -- --testNamePattern="功能描述"
-# 预期：FAIL - function is not defined
-```
+1. [action]
+2. [action]
+3. [verification]
 
-```typescript
-function/[class]() {
-  // 最小实现
-  return expected;
-}
-```
+## Exit Criteria
 
-- [ ] **REFACTOR: 确认测试通过，清理代码**
+- [observable condition]
 
-```bash
-npm test tests/xxx.test.ts
-# 预期：PASS
-```
+## Risks / Notes
 
-- [ ] **COMMIT: 提交**
-
-```bash
-git add tests/xxx.test.ts src/xxx.ts
-git commit -m "feat: [功能描述]"
-```
-
----
-
-## Step N.2: [下一个功能块名称]
-
-[同上结构...]
-
----
-
-## Chunk 元信息
-
-```yaml
-phase: N
-subplan_file: step_subplan_phaseN.md
-created_from: docs/plan-for-all/plans/YYYY-MM-DD-<feature>-detail.md
-tdd_granularity: feature-block
-```
+- [only if relevant]

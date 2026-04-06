@@ -1,47 +1,38 @@
-#!/usr/bin/env bash
-# Check Complete Script for step-planning
-# 验证所有 Phase 和 Step 是否完成
+﻿#!/usr/bin/env bash
+# Check completion status from docs/plan-for-all/task_plan.md
 
-if [ ! -f task_plan.md ]; then
-    echo "[step-planning] task_plan.md 不存在"
-    exit 1
+PLAN_FILE="docs/plan-for-all/task_plan.md"
+
+if [ ! -f "$PLAN_FILE" ]; then
+  echo "[plan-for-all] $PLAN_FILE not found"
+  exit 1
 fi
 
-echo "[step-planning] 检查任务完成状态..."
-echo ""
+echo "[plan-for-all] reading status from $PLAN_FILE"
 
-# 统计
-TOTAL=$(grep -c '\- \[' task_plan.md 2>/dev/null || echo 0)
-COMPLETE=$(grep -c '\- \[x\]' task_plan.md 2>/dev/null || echo 0)
-IN_PROGRESS=$(grep -c '\- \[ \]' task_plan.md 2>/dev/null || echo 0)
-PHASES=$(grep -c '^## Phase' task_plan.md 2>/dev/null || echo 0)
+echo
+ACTIVE_PHASE=$(grep -E '^\| [0-9]+ \|' "$PLAN_FILE" | grep ' in_progress ' | head -1)
+PENDING_COUNT=$(grep -E '^\| [0-9]+ \|' "$PLAN_FILE" | grep -c ' pending ' || true)
+IN_PROGRESS_COUNT=$(grep -E '^\| [0-9]+ \|' "$PLAN_FILE" | grep -c ' in_progress ' || true)
+COMPLETED_COUNT=$(grep -E '^\| [0-9]+ \|' "$PLAN_FILE" | grep -c ' completed ' || true)
+TOTAL_COUNT=$(grep -E '^\| [0-9]+ \|' "$PLAN_FILE" | wc -l | tr -d ' ')
 
-echo "Phase 总数: $PHASES"
-echo "Step 总数: $TOTAL"
-echo "已完成: $COMPLETE"
-echo "进行中: $IN_PROGRESS"
-echo ""
+echo "Total phases: $TOTAL_COUNT"
+echo "Pending: $PENDING_COUNT"
+echo "In progress: $IN_PROGRESS_COUNT"
+echo "Completed: $COMPLETED_COUNT"
 
-# 检查是否有 in_progress
-if grep -q 'in_progress' task_plan.md 2>/dev/null; then
-    CURRENT=$(grep -B1 'in_progress' task_plan.md | head -2)
-    echo "当前进行中:"
-    echo "$CURRENT"
-    echo ""
+if [ -n "$ACTIVE_PHASE" ]; then
+  echo
+  echo "Active phase:"
+  echo "$ACTIVE_PHASE"
 fi
 
-# 计算百分比
-if [ "$TOTAL" -gt 0 ]; then
-    PERCENT=$((COMPLETE * 100 / TOTAL))
-    echo "完成进度: ${PERCENT}%"
+echo
+if [ "$TOTAL_COUNT" -gt 0 ] && [ "$COMPLETED_COUNT" -eq "$TOTAL_COUNT" ]; then
+  echo "[plan-for-all] all phases completed"
+  exit 0
 fi
 
-echo ""
-
-if [ "$COMPLETE" = "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
-    echo "[step-planning] 所有任务已完成！"
-    exit 0
-else
-    echo "[step-planning] 任务尚未完成，请继续执行"
-    exit 1
-fi
+echo "[plan-for-all] work remains"
+exit 1

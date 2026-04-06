@@ -1,332 +1,234 @@
 ---
 name: brainstorming
-description: "需求探索与设计阶段 — 通过逐个提问收敛需求，提出方案并获得用户批准。支持双阶段：Phase 1 需求收敛 → Phase 2 前端设计收敛（可选）。将设计文档写入硬盘。"
+description: Use when a task needs customer-facing requirement convergence before implementation planning, especially when goals, scope, success criteria, or product boundaries are still unclear.
 ---
 
-# Brainstorming — 需求探索与设计
+# Brainstorming Ideas Into Designs
 
-通过自然对话将想法转化为完整的设计方案。
+Help turn ideas into an approved product/design specification through natural collaborative dialogue.
 
-**前置条件：** 已阅读 `task_plan.md`（如果存在），了解项目状态
+This skill is the customer-facing convergence layer. It plays the role that a strong product manager or solution designer would play when talking to a client or stakeholder: clarify what is actually needed, what is in scope, what success means, and what shape the solution should take before handing work to implementers.
 
-## 核心原则
+Start by understanding the current project context, then ask questions one at a time to refine the request. Once the request is understood, present the design and get approval.
 
-- **一次一问** — 不要一次问多个问题
-- **多选优先** — 降低用户回答难度
-- **YAGNI** — 果断删除不必要的功能
-- **渐进确认** — 每个设计 section 获得批准后再继续
+`writing-plans` and `ui-ux-pro-max` are downstream skills. They support implementers after this convergence is complete. They do not replace this step.
 
----
+<HARD-GATE>
+Do NOT invoke any implementation-oriented skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it.
+</HARD-GATE>
 
-## 双阶段流程
+## What This Skill Owns
 
-```
-Phase 1: 需求收敛 → Phase 2: 前端设计收敛（可选）→ 过渡到 writing-plans
-```
+`brainstorming` owns whole-task convergence for all of these kinds of work:
+- backend-only work
+- integrated local projects
+- small monoliths that should not be artificially split
+- UI-bearing products
+- mixed UI + logic + storage projects
+- partial subsystem changes that still need requirement clarification
 
-| 阶段 | 目的 | 产出 |
-|------|------|------|
-| Phase 1 | 需求收敛 | `docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md` |
-| Phase 2 | 前端设计收敛 | 更新设计文档，加入 UI/UX 设计系统 |
+Its job is to determine what the project needs as a whole, not to prematurely separate frontend and backend concerns unless the problem itself demands that separation.
 
----
+## Required Output
 
-# Phase 1: 需求收敛
+The approved design document must contain:
+- problem statement
+- goals
+- non-goals
+- constraints
+- users or operators when relevant
+- major capabilities or workflows
+- system shape and boundaries at the right level of detail
+- acceptance criteria
+- risks and open questions
 
-## Step 1: 检查项目上下文
+If audit-sensitive terms or unstable external claims were discovered during brainstorming, the design doc must also list them so planning can treat them as mandatory audit inputs.
 
-检查是否存在现有的规划文件：
+## Checklist
 
-```bash
-if [ -f task_plan.md ]; then
-  echo "发现已有 task_plan.md，读取并恢复上下文..."
-  cat task_plan.md
-  cat findings.md
-  cat progress.md
-fi
-```
+You MUST complete these in order:
 
-如果项目已存在，记录当前进展，继续从中断处进行。
+1. **Explore project context** — inspect files, docs, and existing structure
+2. **Ask clarifying questions** — one at a time, understand purpose, scope, constraints, workflows, and success criteria
+3. **Register risky terms if needed** — capture high-risk terminology or unstable external claims without derailing convergence
+4. **Propose 2-3 approaches** — with trade-offs and a recommendation
+5. **Present design** — in sections scaled to complexity, get approval as you converge
+6. **Decide whether implementation support sub-skills are needed** — for example `ui-ux-pro-max` for interface refinement
+7. **Write design doc** — save to `docs/plan-for-all/specs/YYYY-MM-DD-<topic>-design.md`
+8. **User reviews written spec** — user can request changes before implementation planning starts
+9. **Transition to implementation planning** — invoke `skills/writing-plans/SKILL.md`
 
----
+## Process Flow
 
-## Step 2: 探索需求（逐个提问）
+```dot
+digraph brainstorming {
+    "Explore project context" [shape=box];
+    "Ask clarifying questions" [shape=box];
+    "Risky term detected?" [shape=diamond];
+    "Register audit-sensitive term" [shape=box];
+    "Propose 2-3 approaches" [shape=box];
+    "Present design sections" [shape=box];
+    "User approves design?" [shape=diamond];
+    "Need downstream UI refinement?" [shape=diamond];
+    "Run ui-ux-pro-max as support step" [shape=box];
+    "Return to brainstorming owner flow" [shape=box];
+    "Write design doc" [shape=box];
+    "User reviews spec?" [shape=diamond];
+    "Invoke writing-plans skill" [shape=doublecircle];
 
-从以下维度依次提问（每次一个），理解：
-1. **产品定位** — C端/B端、工具/娱乐/社交
-2. **核心功能** — 主要解决什么问题
-3. **用户交互** — 关键操作流程
-4. **数据需求** — 需要存储什么
-5. **技术偏好** — 技术栈/框架/存储
-6. **设计风格** — 简洁/丰富/品牌感
-
-**示例：**
-
-> Q1: 这个应用是给自己用还是给别人用？
-> - A: 自己用（个人效率工具）
-> - B: 给团队用（协作平台）
-> - C: 通用（任何人都能用）
-
----
-
-## Step 3: 提出方案（2-3 个选项）
-
-根据问题回答，提出具体方案：
-- 方案 A（推荐）: 适合 X 场景，优势是 Y
-- 方案 B: 适合 X 场景，优势是 Y
-- 方案 C: 适合 X 场景，优势是 Y
-
-**每次都要有推荐**，并说明原因。
-
----
-
-## Step 4: 呈现设计（分 section 获得批准）
-
-当理解足够时，呈现设计：
-
-```markdown
-## 设计方案：[项目名称]
-
-### 架构
-[2-3 句话描述整体架构]
-
-### 核心组件
-- 组件 A: 负责 X，与组件 B 通过 Y 接口交互
-- 组件 B: ...
-
-### 数据流
-[数据如何创建 → 存储 → 展示]
-
-### 技术选型
-- 前端: X（原因）
-- 存储: Y（原因）
-
----
-
-批准后继续下一个 section，直到整个设计获得批准。
+    "Explore project context" -> "Ask clarifying questions";
+    "Ask clarifying questions" -> "Risky term detected?";
+    "Risky term detected?" -> "Register audit-sensitive term" [label="yes"];
+    "Risky term detected?" -> "Propose 2-3 approaches" [label="no"];
+    "Register audit-sensitive term" -> "Propose 2-3 approaches";
+    "Propose 2-3 approaches" -> "Present design sections";
+    "Present design sections" -> "User approves design?";
+    "User approves design?" -> "Ask clarifying questions" [label="no, revise"];
+    "User approves design?" -> "Need downstream UI refinement?" [label="yes"];
+    "Need downstream UI refinement?" -> "Run ui-ux-pro-max as support step" [label="yes"];
+    "Need downstream UI refinement?" -> "Write design doc" [label="no"];
+    "Run ui-ux-pro-max as support step" -> "Return to brainstorming owner flow";
+    "Return to brainstorming owner flow" -> "Write design doc";
+    "Write design doc" -> "User reviews spec?";
+    "User reviews spec?" -> "Ask clarifying questions" [label="changes requested"];
+    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
+}
 ```
 
----
+## The Process
 
-## Step 5: 写入设计文档（Phase 1 产出）
+### Understanding The Request
 
-```markdown
-# [项目名称] 设计文档
-**日期:** YYYY-MM-DD
-**状态:** Phase 1 已批准
+- Check the current project state first: files, docs, existing patterns, and current boundaries.
+- If the request is too large for a single design, help the user decompose it into smaller sub-projects.
+- For appropriately scoped work, ask questions one at a time to refine the request.
+- Focus on the real need, not just the first phrasing of the idea.
 
-## 1. 背景与目标
-[一句话目标]
+### What To Converge
 
-## 2. 设计决策
-| 决策点 | 选择 | 原因 |
-|--------|------|------|
-| 存储方案 | IndexedDB | 离线可用 |
-| ... | ... | ... |
+Depending on the task, converge the relevant parts together:
+- user workflows
+- functional requirements
+- page/screen requirements if applicable
+- data/state/storage needs if applicable
+- local vs remote boundaries if applicable
+- interface/API boundaries if applicable
+- operational constraints
+- acceptance criteria
 
-## 3. 架构
-[详细架构描述]
+Do not force artificial frontend/backend separation onto tasks that are better reasoned about as a single integrated project.
 
-## 4. 组件设计
-[每个组件的职责、接口、状态]
+### Requirement Convergence Rules
 
-## 5. 数据模型
-[数据结构定义]
-```
+- Only one question per message.
+- Do not dump a questionnaire.
+- Do not jump from a vague idea straight to a static architecture write-up.
+- Keep iterating until the request is specific enough that a design can be defended and later implemented.
 
-保存到：`docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`
+### Audit Intake During Brainstorming
 
----
+Audit is a support rule here, not the main workflow.
 
-## Step 6: 询问是否进入 Phase 2
+But it is still a blocking pre-question gate when unresolved external knowledge would distort the next step of convergence.
 
-Phase 1 完成后，询问用户：
+During brainstorming, if you notice:
+- high-risk terminology
+- semantically ambiguous terms
+- recently evolving engineering paradigms
+- unstable external claims that could change the design materially
 
-> "Phase 1 需求收敛已完成，设计文档已保存到 `docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`。
->
-> **是否需要进入 Phase 2：前端设计收敛？**
->
-> Phase 2 将调用 UI/UX Pro Max 技能，帮你：
-> - 确定设计风格（Minimalism / Brutalism / Glassmorphism 等）
-> - 选择配色方案
-> - 选定字体搭配
-> - 生成完整的设计系统建议
->
-> - A: 是，继续 Phase 2（推荐）
-> - B: 跳过，直接进入规划阶段"
+then do this:
+- note the term or claim
+- capture the provisional task meaning if the user has made it clear
+- mark it as audit-sensitive for planning
+- avoid pretending it has already been verified
 
-- **选择 A**：进入 Phase 2
-- **选择 B**：跳到 Step 7（过渡到 Writing Plans）
+If the unresolved term or claim would change:
+- the next clarifying question
+- the framing of multiple-choice options
+- the 2-3 approaches you are about to compare
+- the protocol/provider/framework assumptions in the design
 
----
+then pause and immediately invoke `skills/tech-knowledge-audit/SKILL.md` before continuing.
 
-# Phase 2: 前端设计收敛
+Use the audit result to narrow the factual landscape first, then resume normal requirement convergence.
 
-**触发条件：** 用户选择进入 Phase 2
+Ask the user only for:
+- project-specific intent
+- private terminology
+- preference or business choice
+- ambiguity that authoritative sources cannot resolve
 
-**前置准备：** 读取 `skills/ui-ux-pro-max/SKILL.md` 获取 UI/UX 设计系统
+Do not ask the user to settle public technical facts that official docs, specs, release notes, official blogs, or recent authoritative ecosystem sources can verify.
 
----
+Do not let audit intake replace normal requirement convergence.
 
-## Step 2-1: 分析产品类型和设计关键词
+### Exploring Approaches
 
-从 Phase 1 的设计文档中提取：
-- **产品类型**：SaaS / 电商 / 社交 / 工具 / 内容平台
-- **目标用户**：C端 / B端
-- **设计风格关键词**：简洁 / 现代 / 品牌感 / 内容优先 / 暗色模式
+- Propose 2-3 different approaches with trade-offs.
+- Lead with your recommendation and explain why.
+- For each approach, say when it is appropriate and what it costs.
+- If an approach depends on unresolved external knowledge, say so explicitly.
 
----
+### Presenting The Design
 
-## Step 2-2: 生成设计系统（必需）
+- Once you understand what is being built, present the design.
+- Scale each section to complexity.
+- Cover the parts that matter for this task: workflows, capabilities, boundaries, failure handling, testing expectations, and implementation constraints where relevant.
+- Ask for confirmation or correction as you converge.
+- Be ready to go back and clarify if something does not make sense.
 
-使用 ui-ux-pro-max 的 `--design-system` 生成完整设计系统：
+### Downstream Support Skills
 
-```bash
-python3 skills/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <风格关键词>" --design-system [-p "项目名称"]
-```
+After the overall request has been converged at the customer/product level, decide whether specialized downstream support is needed.
 
-**示例：**
-```bash
-python3 skills/ui-ux-pro-max/scripts/search.py "fintech dashboard modern dark" --design-system -p "Finance App"
-```
+#### `ui-ux-pro-max`
+Use only when the already-converged design includes a user-visible interface whose structure, information hierarchy, interaction quality, or visual quality needs dedicated refinement.
 
-**输出包含：**
-- **Style**: 推荐的设计风格及理由
-- **Color Palette**: 主色、辅色、背景色、文字色
-- **Typography**: 字体搭配建议
-- **Effects**: 阴影、圆角、动效建议
-- **Anti-Patterns**: 需要避免的设计陷阱
+This skill does NOT own product requirement convergence. It refines interface design after `brainstorming` has already clarified what the product needs.
 
----
+If used, control returns to `brainstorming`, which still owns the final design doc.
 
-## Step 2-3: 补充搜索（如需要）
+#### `writing-plans`
+Use only after the written design has been accepted.
 
-根据需要查询更多细节：
+This skill is for turning the approved design into implementation steps for people or agents who will write code.
 
-```bash
-# 查询 UX 最佳实践
-python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain ux [-n <数量>]
+## User Review Gate
 
-# 查询配色方案
-python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain color [-n <数量>]
+After writing the design doc, the user must be able to review it before implementation planning starts.
 
-# 查询字体搭配
-python3 skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain typography [-n <数量>]
-```
+If they request changes:
+- revise the design
+- keep requirement convergence active
+- update the written spec
 
----
+Only proceed to `writing-plans` after the written design is accepted.
 
-## Step 2-4: 呈现 UI/UX 设计系统
+## Key Principles
 
-向用户呈现设计系统建议，征求批准：
+- **Customer-facing convergence first**
+- **One question at a time**
+- **Whole-task reasoning before implementation decomposition**
+- **Explore alternatives**
+- **Incremental validation**
+- **Hard gate before implementation planning**
+- **Audit intake is additive, not dominant**
 
-```markdown
-## Phase 2: UI/UX 设计系统
+## Anti-Patterns
 
-### 设计风格
-**推荐风格:** [风格名称]
-**理由:** [2-3 句话说明为什么适合该项目]
+Do not do these:
+- jump straight to implementation files or code sketches
+- replace requirement convergence with a static design template
+- ask multiple unrelated questions in one message
+- skip 2-3 approaches
+- skip user approval and pretend the design is accepted
+- let audit intake swallow the brainstorming workflow
+- let `ui-ux-pro-max` replace product requirement convergence
+- force frontend/backend separation onto integrated tasks without reason
 
-### 配色方案
-| 角色 | 色值 | 用途 |
-|------|------|------|
-| Primary | #XXXXXX | 主要按钮、链接 |
-| Secondary | #XXXXXX | 次要元素 |
-| Background | #XXXXXX | 背景色 |
-| Surface | #XXXXXX | 卡片、面板 |
-| Text | #XXXXXX | 正文文字 |
+## Handoff
 
-### 字体搭配
-- **标题:** [字体名称]
-- **正文:** [字体名称]
-- **代码/数据:** [字体名称]
+After the user accepts the written design, invoke `skills/writing-plans/SKILL.md`.
 
-### 设计规范
-- **圆角:** [尺寸]
-- **阴影:** [风格]
-- **动效:** [时长、缓动]
-- **间距系统:** 4pt / 8pt / 16pt / 24pt / 32pt
-
-### 需要避免的反模式
-- [ ] 避免项 1
-- [ ] 避免项 2
-
----
-
-**批准后继续下一个 section。**
-```
-
----
-
-## Step 2-5: 更新设计文档
-
-将 UI/UX 设计系统整合到设计文档中：
-
-```markdown
-# [项目名称] 设计文档
-**日期:** YYYY-MM-DD
-**状态:** Phase 1 + Phase 2 已批准
-
-## 1. 背景与目标
-[一句话目标]
-
-## 2. 设计决策
-| 决策点 | 选择 | 原因 |
-|--------|------|------|
-| ... | ... | ... |
-
-## 3. UI/UX 设计系统
-
-### 3.1 设计风格
-**风格:** [风格名称]
-**理由:** [原因]
-
-### 3.2 配色方案
-[配色表格]
-
-### 3.3 字体系统
-[字体搭配]
-
-### 3.4 间距与圆角
-[规范]
-
-### 3.5 动效规范
-[时长、缓动、原则]
-
-## 4. 架构
-[架构描述]
-
-## 5. 组件设计
-[组件列表]
-
-## 6. 数据模型
-[数据结构]
-```
-
-保存到：`docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`（覆盖更新）
-
----
-
-# Step 7: 过渡到 Writing Plans
-
-Phase 1 或 Phase 2 完成后：
-
-> "设计已确认并保存到 `docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`。
->
-> 现在进入规划阶段，我将根据设计文档创建详细的实现计划。"
-
-**过渡到 `writing-plans` 阶段。**
-
----
-
-## 与 Writing Plans 的衔接
-
-Brainstorming 的输出是设计文档（spec），是 Writing Plans 的输入。
-
-```
-设计文档 (spec)
-    ↓
-Writing Plans
-    ↓
-detail_plan.md + step_subplan_*.md + task_plan.md
-```
+If audit-sensitive terms were found, ensure the design doc names them so planning treats them as mandatory audit inputs instead of hidden assumptions.

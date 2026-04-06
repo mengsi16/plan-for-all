@@ -1,44 +1,17 @@
-# 进度日志
+﻿# Progress Log
 
-## 会话：[日期]
+## [YYYY-MM-DD HH:MM]
 
-### Phase N：[标题]
-- **状态：** in_progress
-- **开始时间：** [时间戳]
-- 执行的操作：
-  -
-- 创建/修改的文件：
-  -
-
-### 阶段 2：[标题]
-- **状态：** pending
-- 执行的操作：
-  -
-- 创建/修改的文件：
-  -
-
-## 测试结果
-| 测试 | 输入 | 预期结果 | 实际结果 | 状态 |
-|------|------|---------|---------|------|
-|      |      |         |         |      |
-
-## 错误日志
-| 时间戳 | 错误 | 尝试次数 | 解决方案 |
-|--------|------|---------|---------|
-|        |      | 1       |         |
-
-## 当前 Step 状态
-<!-- 从 task_plan.md 复制当前 in_progress 的 Step -->
-- Step N.1: [功能块名称] - [pending/in_progress/complete]
-
-## 五问重启检查
-| 问题 | 答案 |
-|------|------|
-| 我在哪里？ | Phase N, Step N.1 |
-| 我要去哪里？ | 剩余 Step |
-| 目标是什么？ | 见 task_plan.md Goal |
-| 我学到了什么？ | 见 findings.md |
-| 我做了什么？ | 见上方记录 |
+- Action: [what happened]
+- Files: [paths]
+- Verification: [command]
+- Result: [pass | fail | blocked]
+- Notes: [optional]
 
 ---
-*每个阶段完成后或遇到错误时更新此文件*
+
+## Rules
+
+- This file is append-only.
+- Record facts, not authoritative status.
+- Status changes belong in `task_plan.md`.

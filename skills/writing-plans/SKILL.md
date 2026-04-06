@@ -1,195 +1,266 @@
 ---
 name: writing-plans
-description: "将设计文档转化为可执行的实现计划 — 产出 detail_plan.md，自动触发 step-split.py 拆分为 task_plan.md"
+description: Use when an approved design contract must be converted into an executable implementation plan with smoke checks, verification steps, and persistent status files.
 ---
 
-# Writing Plans — 实现计划生成
+# Writing Plans
 
-将设计文档（spec）转化为详细的实现计划。
+Convert an approved design contract into an executable plan.
 
-**前置条件：** 设计文档已保存在 `docs/plan-for-all/specs/YYYY-MM-DD-<feature>-design.md`
+A plan is not a code dump. Its job is to define behavior, boundaries, checkpoints, and verification so execution does not depend on hidden assumptions.
 
----
+## Required Inputs
 
-## 核心概念
+Before writing the plan, confirm you have:
+- an approved design doc in `docs/plan-for-all/specs/`
+- explicit goals and non-goals
+- acceptance criteria
+- known risks or open questions
 
-| 文件 | 用途 |
-|------|------|
-| `detail_plan.md` | 完整存档，包含所有细节 |
-| `step_subplan_*.md` | 按 Phase 拆分，执行时读取 |
-| `task_plan.md` | 统筹视图，跟踪所有 Phase 和 Step |
+If these are missing, return to brainstorming.
 
----
+## Required Outputs
 
-## Step 1: 读取设计文档
-
-读取 `docs/plan-for-all/specs/` 下的最新设计文档：
-- 理解架构决策
-- 识别需要构建的组件
-- 确定技术栈
-
----
-
-## Step 2: 创建 Detail Plan
-
-```markdown
-# [项目名称] 实现计划
-
-**Goal:** [一句话目标]
-**Architecture:** [2-3 句架构]
-**Tech Stack:** [技术栈]
-
----
-
-## Chunk 1: [Phase 1 名称]
-
-### 组件/模块 1.1
-
-**文件:**
-- Create: `src/file.ts`
-- Modify: `src/existing.ts:1-20`
-
-**Step 1:** [具体操作，2-5 分钟]
-**Step 2:** [具体操作]
-...
-
-### 组件/模块 1.2
-...
-
-## Chunk 2: [Phase 2 名称]
-...
-```
-
-**保存到：** `docs/plan-for-all/plans/YYYY-MM-DD-<feature>-detail.md`
-
----
-
-## Step 3: 子任务分解（Step Decomposition）
-
-当 `detail_plan.md` 写入后，对每个 Chunk 调用 `step-decomposition` skill 进行智能分解：
-
-1. 读取 `detail_plan.md` 中的所有 Chunk
-2. 对每个 Chunk，使用 `step-decomposition` skill 生成 `step_subplan_phase{N}.md`
-3. 汇总生成 `task_plan.md`
-
-### 使用 step-decomposition skill
-
-对每个 Chunk，填充 Few-Shot 模板：
-
-```markdown
-## 模块：[Chunk 名称]
-
-[Chunk 的完整描述]
-
-## 约束
-- 每个 Step 耗时 2-5 分钟
-- Step 必须可直接执行
-- 包含 TDD 循环
-```
-
-模型将输出完整的 Step Subplan，保存到：
-- `docs/plan-for-all/plans/step_subplans/step_subplan_phase{N}.md`
-
-### 生成 task_plan.md
-
-汇总所有 Phase 和 Step 的元信息，生成统筹视图，保存到 `docs/plan-for-all/task_plan.md`：
-
----
-
-## Step 4: 生成辅助文件
-
-创建辅助文件到 `docs/plan-for-all/` 目录：
-
+Planning must produce:
+- `docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
+- `docs/plan-for-all/plans/step_subplans/step_subplan_phase*.md`
+- `docs/plan-for-all/task_plan.md`
 - `docs/plan-for-all/findings.md`
 - `docs/plan-for-all/progress.md`
 
-**findings.md:**
+## Planning Principles
+
+- **Smoke test first**: every non-trivial plan starts by proving the current baseline
+- **Behavior before implementation**: define expected behavior and verification before code steps
+- **Exact file paths**: file ownership must be explicit
+- **Small executable steps**: each step should be concrete and bounded
+- **No speculative bulk code**: include code only when a tiny snippet clarifies an interface or test shape
+- **Status honesty**: initialize tracking files without fake completion claims
+- **Knowledge before dependence**: if the plan depends on an external term or claim, verify it before relying on it
+
+## Step 0: Technical Knowledge Audit Hard Gate
+
+Use `skills/tech-knowledge-audit/SKILL.md` before planning relies on any unstable or unfamiliar knowledge.
+
+This is not permission to defer all audit work until planning. If brainstorming, decomposition, or execution already depends on unresolved external technical meaning, audit must happen there before the workflow continues.
+
+Mandatory audit targets include:
+- version-sensitive frameworks or libraries
+- provider or protocol behavior that may have changed
+- APIs with compatibility uncertainty
+- unfamiliar terminology or architecture names
+- high-risk terminology with likely semantic drift or recent ecosystem-specific meaning
+- recent engineering patterns or agent paradigms that may not be captured by older model knowledge
+
+### Hard Gate Rule
+
+Do not continue to the detail plan while any mandatory audit item is unresolved.
+
+If an item is still unresolved after checking the best available sources:
+- record it in `docs/plan-for-all/findings.md`
+- add it to `docs/plan-for-all/task_plan.md` blockers or open questions
+- constrain the plan around that uncertainty or stop and ask the user
+
+Planning may continue only when each mandatory item is either:
+- `verified_recent`
+- `verified_official`
+- `project_specific_ask_user`
+- explicitly recorded as unresolved with visible planning impact and blocker status
+
+Do not use tech audit as a substitute for architecture thinking.
+
+## Step 1: Classify The Work
+
+Identify which planning mode applies:
+
+### Greenfield
+Use when building a new feature or project.
+
+Plan must include:
+- bootstrap or baseline smoke check
+- first user-visible behavior
+- vertical slices over horizontal layers when possible
+
+### Bugfix
+Use when behavior is broken or suspected broken.
+
+Plan must include:
+- minimal reproduction or smoke check
+- root-cause investigation step
+- failing regression test before implementation
+
+### Refactor
+Use when changing structure while preserving behavior.
+
+Plan must include:
+- behavior-preservation checks
+- safety rails and rollback points
+- explicit proof that external behavior stays stable
+
+## Step 2: Build The Detail Plan
+
+Save to `docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`.
+
+Use this structure:
+
 ```markdown
-# Findings - [项目名称]
+# [Topic] Implementation Plan
 
-## 设计决策
-1. [决策点]: [选择] - [原因]
-2. ...
+> Required Skill: Invoke `plan-for-all:test-driven-development` before executing the detailed steps below.
 
-## 技术参考
-- [技术 A]: 用于 X
-- [技术 B]: 用于 Y
-```
-
-**progress.md:**
-```markdown
-# Progress - [项目名称]
-
-## YYYY-MM-DD
-
-### 规划阶段
-- [x] 完成设计文档
-- [x] 完成实现计划
-```
+**Goal:** [One sentence]
+**Mode:** [Greenfield | Bugfix | Refactor]
+**Architecture:** [2-3 sentences]
+**Tech Stack:** [Key technologies]
 
 ---
 
-## Step 5: 等待用户确认
+## Contract Summary
+- Goals:
+- Non-goals:
+- Acceptance criteria:
+- Open questions / risks:
+- Verified terminology / external assumptions:
 
-> "计划已生成并保存到 `docs/plan-for-all/task_plan.md`。
->
-> 文件结构：
-> - `docs/plan-for-all/specs/` — 设计文档
-> - `docs/plan-for-all/plans/` — 实现计划详情
-> - `docs/plan-for-all/plans/step_subplans/` — Phase 子计划
-> - `docs/plan-for-all/task_plan.md` — 统筹视图
-> - `docs/plan-for-all/findings.md` — 研究发现
-> - `docs/plan-for-all/progress.md` — 进度日志
->
-> 说"开始执行"我将通过 TDD 循环逐步实现。"
->
+## Phase 1: [Name]
 
+**Objective:**
+**Why now:**
+**Files:**
+- Create:
+- Modify:
+- Test:
 
-## 与执行阶段的衔接
+### Smoke Check
+Run: `[command]`
+Expected: `[baseline behavior or failure]`
 
-用户说"开始执行"后：
+### Steps
+1. [Action]
+2. [Action]
+3. [Verification]
 
-```
-task_plan.md (已创建)
-    ↓
-EXECUTE Phase (TDD 循环)
-    ↓
-Hook: PreToolUse → 读取当前 step_subplan
-Hook: PostToolUse → 更新 task_plan.md
-```
+### Exit Criteria
+- [observable condition]
 
----
-
-## Detail Plan 结构规范
-
-### Header (必需)
-
-```markdown
-# [Feature] 实现计划
-
-**Goal:** [一句话]
-**Architecture:** [架构描述]
-**Tech Stack:** [技术栈]
+## Phase 2: [Name]
+...
 ```
 
-### Chunk 分隔
+## What A Good Phase Contains
 
-使用 `## Chunk N: [Phase 名称]` 分隔每个 Phase。
-每个 Chunk 包含该 Phase 的所有组件和步骤。
+Each phase should include:
+- objective
+- files in scope
+- smoke check or baseline verification
+- ordered steps
+- verification command(s)
+- exit criteria
+- known risk if applicable
 
-### Step 粒度
+The detail plan itself must begin with the required `plan-for-all:test-driven-development` skill banner so execution starts under an explicit TDD contract instead of relying on later reminders.
 
-每个 Step 应该是 2-5 分钟的操作：
-- "创建 X 文件"
-- "实现 Y 函数"
-- "添加 Z 测试"
+Each step should be one action, for example:
+- add a failing test for unauthorized access
+- run the targeted test and confirm it fails for the expected reason
+- implement the minimal auth branch
+- rerun the targeted test
+- run the phase smoke check
 
-### TDD 嵌入（可选）
+## What Must Not Go Into The Plan
 
-如果使用 TDD，在 Step 中嵌入：
+Do not default to:
+- full source files
+- long speculative implementations
+- fake completion statuses
+- generic `implement feature` placeholders without verification
+- broad research notes that belong in `findings.md`
+- unverified external terminology or ecosystem claims presented as settled fact
 
-```markdown
-- [ ] **RED:** 写失败的测试
-- [ ] **GREEN:** 实现最小代码
-- [ ] **REFACTOR:** 清理代码
-```
+## Step 3: Extract Execution Views
+
+After the detail plan is written, use `skills/step-decomposition/SKILL.md` to derive execution-focused subplans.
+
+Subplans should extract:
+- current objective
+- relevant files
+- current smoke or failing test target
+- execution steps
+- verification commands
+- exit criteria
+- knowledge blockers if they still constrain execution
+
+Subplans must start with this required skill banner before the extracted execution content:
+- `> Required Skill: Invoke `plan-for-all:test-driven-development` before executing the detailed steps below.`
+
+Subplans should not become a second copy of the detail plan.
+
+## Step 4: Initialize Tracking Files
+
+### `task_plan.md`
+This is the single source of truth.
+
+It must include:
+- goal
+- current mode
+- phases with statuses (`pending`, `in_progress`, `completed`)
+- active subplan path
+- blockers
+- knowledge blockers from audit
+- open questions
+- completion criteria
+
+### `findings.md`
+This file stores:
+- decisions
+- assumptions
+- risks
+- audit results
+- unresolved questions
+- term meaning resolution for high-risk terminology
+
+It does not own progress state.
+
+### `progress.md`
+This file is append-only and factual.
+
+It should record:
+- timestamp
+- action taken
+- files touched
+- verification run
+- result
+
+It must not mark global completion by itself.
+
+## Step 5: Wait For Execution Approval
+
+When planning is complete, tell the user:
+- where the plan files were written
+- what the active first phase is
+- what smoke check will run first during execution
+- whether any unresolved knowledge blockers remain
+
+Execution begins only after the user asks to proceed.
+
+## Plan Quality Checklist
+
+Before handing off, confirm:
+- goals and non-goals are visible in the detail plan
+- every phase has verification, not just implementation intent
+- bugfix plans include reproduction and failing regression tests
+- refactor plans include behavior-preservation checks
+- all mandatory audit items were verified or surfaced as blockers
+- high-risk terminology has explicit current meaning in `findings.md`
+- `task_plan.md` can be used alone to determine current status and blockers
+- `progress.md` and `findings.md` do not claim authoritative completion
+
+## Anti-Patterns
+
+Do not do these:
+- write the implementation inside the plan
+- move TDD to a later reminder layer
+- create subplans by copying entire chunks verbatim
+- initialize progress files with completed boxes that were never earned
+- confuse research notes with execution state
+- continue planning while mandatory terminology audit items remain hidden or unresolved

@@ -1,48 +1,56 @@
-# [项目名称] Implementation Plan
+﻿# [Topic] Task Plan
 
-> **For agentic workers:** REQUIRED: 使用 superpowers:subagent-driven-development 或 superpowers:executing-plans 执行此计划。
-
-**Goal:** [一句话目标]
-
-**Architecture:** [2-3句架构描述]
-
-**Tech Stack:** [关键技术栈]
+**Goal:** [One-sentence goal]
+**Mode:** [Greenfield | Bugfix | Refactor]
+**Status:** [pending | in_progress | completed]
+**Design Doc:** `docs/plan-for-all/specs/YYYY-MM-DD-<topic>-design.md`
+**Detail Plan:** `docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
 
 ---
 
-## Phase 1: [阶段名称]
+## Current State
 
-**Step Subplan:** `docs/superpowers/plans/step_subplans/step_subplan_phase1.md`
+- **Active Phase:** [Phase N]
+- **Active Subplan:** `docs/plan-for-all/plans/step_subplans/step_subplan_phaseN.md`
+- **Current Focus:** [current objective]
+- **Blockers:** [none / list]
+- **Knowledge Blockers:** [none / unresolved terminology, missing external verification, conflicting sources]
+- **Recheck Required:** [none / items whose earlier audit result must be revisited]
 
-- [ ] Step 1.1: [功能块名称]
-- [ ] Step 1.2: [功能块名称]
-- [ ] Step 1.3: [功能块名称]
+## Phases
 
-## Phase 2: [阶段名称]
+| Phase | Name | Status | Subplan | Exit Criteria |
+|------|------|--------|---------|---------------|
+| 1 | [Name] | pending | `docs/plan-for-all/plans/step_subplans/step_subplan_phase1.md` | [observable condition] |
+| 2 | [Name] | pending | `docs/plan-for-all/plans/step_subplans/step_subplan_phase2.md` | [observable condition] |
 
-**Step Subplan:** `docs/superpowers/plans/step_subplans/step_subplan_phase2.md`
+## Immediate Next Actions
 
-- [ ] Step 2.1: [功能块名称]
-- [ ] Step 2.2: [功能块名称]
+1. [next action]
+2. [next action]
+3. [verification action]
 
----
+## Open Questions
 
-## 关键问题
-1. [待回答的问题]
-2. [待回答的问题]
+- [question]
 
-## 已做决策
-| 决策 | 理由 |
-|------|------|
-|      |      |
+## External Knowledge Status
 
-## 遇到的错误
-| 错误 | 尝试次数 | 解决方案 |
-|------|---------|---------|
-|      | 1       |         |
+- Verified terminology / assumptions: [list]
+- Unresolved terminology / assumptions: [list]
+- Required follow-up verification: [list]
+- Recheck-required items: [list]
 
-## 备注
-- 随着进度更新 Step 状态：pending → in_progress → complete
-- 做重大决策前重新读取此计划（注意力操纵）
-- 记录所有错误，避免重复
-- 每个 Phase 完成后考虑调用 requesting-code-review
+## Completion Criteria
+
+- [criterion]
+- [criterion]
+
+## Status Rules
+
+- Update status here first.
+- Only one phase may be `in_progress` at a time.
+- Mandatory terminology or external knowledge blockers must stay visible here until resolved.
+- `stale_recheck_required` items must stay visible here until re-verified or downgraded with an explicit reason.
+- `progress.md` may describe actions but must not override this file.
+- `findings.md` may describe risks, decisions, and audit detail but must not override this file.

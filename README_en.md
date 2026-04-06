@@ -28,142 +28,183 @@
 
 ## Pain Points
 
-Have you experienced these frustrating moments?
+Have you experienced these failure modes?
 
 | Scenario | Result |
 |----------|--------|
-| Claude Code Plan Mode context gets compressed | All your carefully gathered requirements are lost, ToDos never get completed |
-| brainstorming + writing-plans output massive plans | Overwhelming context causes Claude Code to fall back to default tool calls, forgetting your specified skills |
-| Long task interrupted mid-session | When you return, you have no idea where you left off — everything from scratch |
+| Claude Code Plan Mode context gets compressed | Carefully collected requirements disappear and ToDos lose coherence |
+| brainstorming + writing-plans output a giant plan blob | scope, state, and verification get mixed together until nothing is trustworthy |
+| Long task interrupted mid-session | when you return, you no longer know what was active |
+| UI, logic, storage, and protocol concerns get mixed together | without a single convergence owner, the request drifts before implementation even starts |
 
-**Plan-For-All** draws from the planning-with-files (Manus philosophy) — writing plans to disk to prevent plan loss from context compression. It also draws from superpowers' requirements design and step-decomposition concepts, actually implementing them as small files (step_subplan) to prevent massive content from flooding the context.
+**Plan-For-All** is not about writing more documents. It separates customer-facing convergence, implementer-facing planning, and execution-state control into different disk-backed artifacts:
+- `brainstorming` owns whole-request convergence and produces the approved design doc
+- `writing-plans` turns that approved design into implementation plans for the people or agents writing code
+- `task_plan.md` owns the single source of truth for status
 
 ---
 
 ## Core Philosophy
 
-Plan-For-All breaks large plans into small chunks, uses `task_plan.md` as the master view, and automatically loads small plans as each phase progresses. This keeps **the plan always up-to-date** and **context always clean**.
+Plan-For-All breaks large work into resumable planning artifacts, uses `task_plan.md` as the control surface, and keeps active context focused on the current step.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│  Traditional: Everything in context → Compressed/Lost                               │
-│  Plan-For-All: Split detailed-plan to subplans to disk → Load on demand → Clean     │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Traditional[Traditional]
+        A[everything in context] --> B[compression / drift]
+    end
+    subgraph PlanForAll[Plan-For-All]
+        C[planning to disk] --> D[load on demand]
+        D --> E[task_plan as single control]
+    end
 ```
 
 ---
 
 ## Workflow
 
+```mermaid
+flowchart LR
+    subgraph P1[Phase 1: BRAINSTORMING]
+        A1[Talk to stakeholder] --> A2[Converge requirements one question at a time]
+        A2 --> A3[Compare approaches and get approval]
+        A3 --> A4[Use ui-ux-pro-max only if interface refinement is needed]
+        A4 --> A5[Write design.md]
+    end
+    subgraph P2[Phase 2: WRITING PLANS]
+        B1[Approved design doc] --> B2[detail_plan]
+        B2 --> B3[step_subplan]
+        B3 --> B4[task_plan.md]
+    end
+    subgraph P3[Phase 3: EXECUTE]
+        C1[Execute from subplan] --> C2[verify first]
+        C2 --> C3[update truth source]
+    end
+    P1 --> P2 --> P3
 ```
-Phase 1: BRAINSTORMING          Phase 2: WRITING PLANS         Phase 3: EXECUTE
-┌─────────────────────┐       ┌─────────────────────┐       ┌────────────────────────┐
-│  Explore → Approve  │ ──►   │  detail_plan →      │ ──►   │  TDD small steps       │
-│  design.md output   │       │  step_subplan →     │       │  Hook auto-reads       │
-│                     │       │  task_plan.md       │       │  auto-updates state    │
-└─────────────────────┘       └─────────────────────┘       └────────────────────────┘
-```
+
+---
+
+## Current Principles
+
+| Principle | Meaning |
+|-----------|---------|
+| `task_plan.md` is the only status truth source | `findings.md` and `progress.md` must not compete for status authority |
+| Converge before plan | `brainstorming` plays the customer-facing product role: ask one question at a time, compare approaches, converge the whole request, and only then write the spec |
+| `brainstorming` owns the whole request | integrated local projects should be reasoned about as one project unless the problem truly demands separation |
+| `ui-ux-pro-max` is subordinate | it refines interfaces after convergence; it does not own requirement discovery |
+| `writing-plans` is implementation handoff | it serves implementers after the design has already been accepted |
+| Smoke check before implementation | non-trivial work starts from a baseline proof or failure reproduction |
+| TDD must not be postponed | no more “implement first, remind later” workflow |
+| `step_subplan` is an execution view | it extracts current objective, verification, and exit criteria |
+| Hook fallback guardrails stay | hooks continue to handle session recovery, context replay, and TDD/verification reminders without replacing the written workflow contract |
+| New terms default to mandatory verification | new terms, semantically drifted terms, and recent paradigms must be checked first; if they would affect the next question, approach comparison, or design assumption, verify before asking, with official sources preferred and recent high-quality sources used when no official source exists |
+| Audit stays active across phases | brainstorming, planning, decomposition, execution, and completion must all register new risky terms and carry blockers forward |
+
+---
+
+## Where `ui-ux-pro-max` Fits
+
+`ui-ux-pro-max` is not the main requirement-convergence flow and not a peer phase owner. It is a subordinate interface-refinement step under `brainstorming`.
+
+`brainstorming` may call it only when:
+- the already-converged design includes a user-visible interface
+- layout, information hierarchy, interaction quality, or visual quality materially affect success
+- the stakeholder explicitly wants stronger design direction, component design, visual quality, or a design system
+
+`ui-ux-pro-max` is for:
+- refining page structure
+- refining information hierarchy
+- refining interaction and visual direction
+- surfacing UI risks and anti-patterns
+
+It is not for:
+- replacing whole-request convergence
+- deciding the full functional scope of the product
+- deciding whether the system should be split into frontend/backend
+- owning the final design doc
+
+After it runs, control returns to `brainstorming`, which still owns the final written design.
 
 ---
 
 ## Usage Examples
 
-### Example 1: Todo-Web with Login
+### Example 1: Todo Web With Login
 
 **Input:**
 
-```
+```text
 I want a todo website with login functionality.
 ```
 
 **What happens automatically:**
 
-```
+```text
 [plan-for-all] New project detected, entering Phase 1: BRAINSTORMING
 ```
 
-```
+```text
 Q1: Is this todo website for yourself or for others?
   A: Personal use / B: Team collaboration / C: Public access
 ```
 
-After your selection, AI continues asking questions one by one (tech stack, data storage, design style, etc.), then presents 2-3 options with a recommendation.
+`brainstorming` then continues converging:
+- goals
+- non-goals
+- workflows
+- pages/modules
+- feature boundaries
+- constraints and acceptance criteria
 
-After design approval, AI writes the design document to:
-```
-docs/plan-for-all/specs/YYYY-MM-DD-todo-web-design.md
-```
+Only after the overall request is understood may `brainstorming` call `ui-ux-pro-max` to refine interface details such as:
+- information hierarchy
+- page structure
+- interaction model
+- design direction
+- UI risks and anti-patterns
 
-When you type "start planning", Phase 2 begins:
+Then `brainstorming` still writes the final design doc and hands it to `writing-plans`.
 
-```
-AI creates detail_plan.md with all Chunks (auth, database, frontend components, etc.)
-AI calls step-decomposition skill for each Chunk
-AI generates task_plan.md
-```
-
-After completion you see:
-
-```
-✅ Plan ready!
-
-- docs/plan-for-all/specs/YYYY-MM-DD-todo-web-design.md
-- docs/plan-for-all/plans/YYYY-MM-DD-todo-web-detail.md
-- docs/plan-for-all/plans/step_subplans/step_subplan_phase1.md  (Auth)
-- docs/plan-for-all/plans/step_subplans/step_subplan_phase2.md  (Todo CRUD)
-- task_plan.md  ← Master view
-- findings.md   ← Research findings
-- progress.md    ← Progress log
-
-Type "start executing" and I'll implement step by step via TDD.
-```
-
-When you type "start executing", Phase 3 begins:
-
-```
-[plan-for-all] === Current Step ===
-## Step 1.1: Configure NextAuth + Google Provider
-
-### TDD Loop
-- [ ] RED: Write a failing test
-- [ ] GREEN: Run test to verify failure
-- [ ] GREEN: Write minimal implementation
-- [ ] GREEN: Run test to verify pass
-- [ ] COMMIT: Commit
-```
-
-Every time you execute Bash/Edit/Write, the Hook automatically loads and displays the current step. After completion, it updates `task_plan.md` and moves to the next Step.
-
----
-
-### Example 2: Scientific Calculator
+### Example 2: API Proxy / Middleware Service
 
 **Input:**
 
-```
-Help me plan a scientific calculator with trigonometric functions, logarithms, and factorial.
+```text
+Help me plan a local API proxy that routes multiple providers behind one entry point.
 ```
 
 **What happens automatically:**
 
+```text
+Phase 1: AI first verifies high-risk external facts such as protocol and compatibility claims
+     -> then converges protocol boundaries, config contracts, and acceptance criteria
+     -> writes the design contract
 ```
-Phase 1: AI asks questions (precision? history? UI style? keyboard layout?)
-     → Design document output
 
-Phase 2: AI generates detail_plan.md
-     Chunk 1: Basic operations (add/subtract/multiply/divide, parentheses)
-     Chunk 2: Scientific functions (sin/cos/tan/log/ln)
-     Chunk 3: Factorial and special operations
-     → Split into step_subplan_phase1.md, step_subplan_phase2.md, step_subplan_phase3.md
-     → Aggregated into task_plan.md
+Because this is backend / protocol work:
 
-Phase 3: TDD loop execution
-     Step 1.1: Implement Calculator class skeleton
-     Step 1.2: Implement basic arithmetic
-     Step 1.3: Implement parentheses priority handling
-     Step 2.1: Implement trigonometric functions
-     ...
+```text
+Skip ui-ux-pro-max
+Go directly to Phase 2: WRITING PLANS
 ```
+
+### Example 3: Integrated Local Project
+
+**Input:**
+
+```text
+I want a local knowledge-base tool with search, tags, note editing, and local storage.
+```
+
+**What happens automatically:**
+
+```text
+Phase 1: AI converges workflows, UI needs, storage choices, search behavior, editing behavior, and local boundaries together
+     -> does not force an artificial frontend/backend split
+```
+
+If interface refinement is needed later, `brainstorming` may call `ui-ux-pro-max` as a support step. Otherwise it writes the design doc directly and moves to `writing-plans`.
 
 ---
 
@@ -171,47 +212,42 @@ Phase 3: TDD loop execution
 
 | File | Purpose |
 |------|---------|
-| `task_plan.md` | Master view — tracks all Phase and Step statuses |
-| `step_subplan_phaseN.md` | Execution file — complete TDD steps for current Phase |
-| `detail_plan.md` | Archive file — complete original implementation plan |
-| `findings.md` | Research findings — tech decisions, references |
-| `progress.md` | Progress log — session records, error records |
+| `docs/plan-for-all/task_plan.md` | master view and only status truth source |
+| `docs/plan-for-all/plans/step_subplans/step_subplan_phaseN.md` | execution view for the current phase |
+| `docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md` | full implementation plan |
+| `docs/plan-for-all/findings.md` | decisions, assumptions, risks, audit output |
+| `docs/plan-for-all/progress.md` | factual progress log, not a status owner |
 
 ---
 
-## Hook Automation
+## What Was Corrected
 
-Plan-For-All uses Hooks for full-session protection:
+Compared with the legacy version, the current version explicitly fixes several systemic problems:
 
-| Timing | Hook | Automation |
-|--------|------|------------|
-| Session start | `UserPromptSubmit` | Detect if task_plan.md exists |
-| When reading files | `PreToolUse` | Auto-display current task_plan.md |
-| Before execution | `PreToolUse` | Auto-load and display current step_subplan |
-| After plan write | `PostToolUse` | Prompt to call step-decomposition |
-| On git commit | `PostToolUse` | Auto-record to progress.md |
-| Session end | `Stop` | Show completion progress |
+- it no longer treats hooks as the only mechanism; they remain as fallback guardrails for session recovery and TDD/verification reminders
+- new terms, semantically drifted terms, and recent paradigms now enter mandatory verification instead of relying on stale model memory
+- audit is no longer a one-time planning precheck; it now stays active through brainstorming, planning, decomposition, execution, and completion
+- `brainstorming` is back to being the customer-facing convergence owner
+- `ui-ux-pro-max` is back to being a subordinate interface-refinement step
+- `writing-plans` is back to being the implementation handoff layer
+- it no longer lets `progress.md` or `findings.md` own status
+- it no longer treats `step_subplan` as a raw copy of the detail plan
+- it no longer defaults to stuffing speculative implementation code into the plan
 
----
-
-## Plans Are Not Perfect
-
-Plan-For-All's plans are generated based on design documents and AI reasoning, but unexpected issues always arise during actual execution. These minor issues:
-
-> Can be handled by the more powerful (and expensive) **ChatGPT 5.4x High** and **Claude Opus 4.6**.
-
-Plan-For-All is responsible for **never losing direction, never stopping in small steps** — specific technical details and edge cases can be handed off to more powerful models.
+See:
+`systemic-legacy-skill-findings-and-remediation.md`
 
 ---
 
 ## Installation & Usage
 
-Load plan-for-all skill in Claude Code:
+To load `plan-for-all` in Claude Code:
 
-Download and extract the project, place it in the ~/.claude/skills directory.
+Place the project under `~/.claude/skills`.
 
 Invoke with:
-```
+
+```bash
 /plan-for-all prompt
 ```
 
@@ -221,36 +257,47 @@ Invoke with:
 
 | Rule | Description |
 |------|-------------|
-| Create plan first | Never execute complex tasks without task_plan.md |
-| Two-step rule | After every 2 read/search operations, save key findings to file |
-| Read before decisions | Read plan files before making major decisions |
-| Update after action | Mark status after completing phases, record errors |
-| Record all errors | Log errors and solutions in progress.md |
-| Three-failure protocol | Diagnose → Alternative approach → Rethink → Ask user |
+| Plan first | never execute complex work without `docs/plan-for-all/task_plan.md` |
+| Read before decisions | major decisions should read `task_plan.md` and `findings.md` first |
+| Update after action | update `task_plan.md` first, then append to `progress.md` |
+| Record assumptions and risks | keep them in `findings.md` |
+| Three-failure protocol | diagnose -> alternate approach -> rethink -> ask user |
 
 ---
 
 ## Five-Question Recovery Test
 
-At the start of each session, quickly recover context using these five questions:
+At the start of each session, recover context with these five questions:
 
 | Question | Answer Source |
 |----------|---------------|
-| Where am I? | Current Phase in `task_plan.md` + `step_subplan_*.md` |
-| Where am I going? | Remaining Phase list in `task_plan.md` |
-| What's the goal? | Goal declaration in `task_plan.md` |
-| What have I learned? | `findings.md` |
-| What do I do next? | Current TDD step in `step_subplan_*.md` |
+| Where am I? | current phase in `docs/plan-for-all/task_plan.md` + active subplan |
+| Where am I going? | remaining phases in `docs/plan-for-all/task_plan.md` |
+| What is the goal? | Goal declaration in `docs/plan-for-all/task_plan.md` |
+| What have I learned? | `docs/plan-for-all/findings.md` |
+| What do I do next? | current execution step in `step_subplan_*.md` |
 
 ---
 
 ## Acknowledgments
 
-Plan-For-All was made possible by these open source projects:
+Plan-For-All was shaped by these open-source projects:
 
-- **[superpowers](https://github.com/obra/superpowers)** — Provided the powerful brainstorming and writing-plans skill system, making requirements exploration and plan generation systematic
-- **[planning-with-files](https://github.com/OthmanAdi/planning-with-files)** — The Manus philosophy — persisting plans to disk — is the source of Plan-For-All's core philosophy
-- **[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)** — Provided professional frontend design intelligence with 50+ styles, 161 color palettes, UX guidelines, and more — powering Phase 2 frontend design convergence
+- **[superpowers](https://github.com/obra/superpowers)** — provided brainstorming, writing-plans, and TDD methodology
+- **[planning-with-files](https://github.com/OthmanAdi/planning-with-files)** — provided the core idea of persisting plans to disk
+- **[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)** — provides interface-refinement support when a converged design needs dedicated UI work
 
-Special thanks to the Manus project for its core insight: **keep context for what really matters, let disk handle the plan.**
+Special thanks to the Manus idea for its core insight: **keep context for what matters, let disk hold the plan.**
 
+---
+
+## Hook Positioning
+
+The current version explicitly keeps hooks with a narrow role:
+
+- `UserPromptSubmit`: detect an active plan and remind the agent to read `task_plan.md`, `findings.md`, and `progress.md`
+- `PreToolUse`: replay current status and execution context before reads or edits
+- `PostToolUse`: remind the agent to sync plans and run TDD/verification after plan edits or file mutations
+- `Stop`: remind the agent to leave `task_plan.md` and `progress.md` in a truthful state before the session ends
+
+These hooks are fallback guardrails, not the primary source of discipline. The real workflow contract still lives in the design contract, detail plan, subplans, and execution steps.

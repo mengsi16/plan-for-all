@@ -1,172 +1,150 @@
----
+﻿---
 name: step-decomposition
-description: "将 detail_plan.md 中的 Phase 提取为 step_subplan"
+description: Use when a detail implementation plan needs execution-focused subplans that highlight the active objective, verification steps, exit criteria, and active blockers without copying the whole plan.
 ---
 
 # Step Decomposition
 
-将 `detail_plan.md` 中的指定 Phase（Chunk）提取整理为 `step_subplan_phase{N}.md`。
+Extract execution views from the detail plan.
 
----
+This skill is not a copier. Its job is to preserve execution-critical information while removing planning noise.
 
-## 输入
+Step decomposition also carries forward full-lifecycle audit state. If execution still depends on unresolved terminology, external claims, or recheck-required knowledge, the subplan must keep that visible.
 
-- `detail_plan.md` 文件路径
-- 要提取的 Phase 编号
+## Purpose
 
----
+A step subplan should help an executor answer these questions quickly:
+- what is the current objective?
+- which files are in scope?
+- what must be proven before implementation?
+- what is the next action?
+- which knowledge blockers still constrain this phase?
+- how do we know this phase is done?
 
-## 输出
+If the subplan cannot answer those questions faster than the detail plan, it failed.
 
-`docs/plan-for-all/plans/step_subplans/step_subplan_phase{N}.md`
+## Input
 
-格式：
+- detail plan path
+- phase or workstream to extract
+- current audit blockers or recheck-required items from `task_plan.md` and `findings.md` when relevant
+
+## Output
+
+Write to:
+- `docs/plan-for-all/plans/step_subplans/step_subplan_phase{N}.md`
+
+Every generated subplan must start with a TDD guard banner that uses the skill name, not a file path:
+- `> Required Skill: Invoke `plan-for-all:test-driven-development` before executing the detailed steps below.`
+
+## Extraction Rules
+
+Keep these from the detail plan:
+- phase title
+- objective
+- files in scope
+- smoke check or failing-test target
+- ordered execution steps
+- verification commands
+- exit criteria
+- risks or blockers that matter right now
+- knowledge blockers or recheck requirements that still affect execution
+
+Compress or remove these when not execution-critical:
+- repeated rationale already captured in the phase objective
+- long examples and boilerplate
+- broad context already present in the detail plan
+- speculative implementation sketches
+
+## Do Not Do These
+
+- do not copy large code blocks by default
+- do not preserve verbosity for its own sake
+- do not invent implementation details that are absent from the plan
+- do not change acceptance meaning
+- do not hide verification behind vague wording
+- do not drop unresolved audit items that still affect the active phase
+
+## Recommended Subplan Structure
+
 ```markdown
-# Phase [N]: [标题] — Step Subplan
+# Phase N: [Name] — Step Subplan
 
-> **来源：** detail_plan.md
+> Source: `docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
+> Required Skill: Invoke `plan-for-all:test-driven-development` before executing the detailed steps below.
 
-## Step [编号]: [标题]
+**Objective:** [current phase objective]
+**Mode:** [Greenfield | Bugfix | Refactor]
 
-### 详细内容
-[从 detail_plan 提取的完整实现内容]
+## Files In Scope
+- Create:
+- Modify:
+- Test:
 
-### TDD 循环
-- [ ] **RED:** 写失败的测试
-- [ ] **GREEN:** 运行测试验证失败
-- [ ] **GREEN:** 写最小实现代码
-- [ ] **GREEN:** 运行测试验证通过
-- [ ] **COMMIT:** 提交
+## Baseline Check
+Run: `[command]`
+Expected: `[current baseline or failure]`
 
----
+## Knowledge Status
+- Blockers:
+- Recheck Required:
+- Current Term Meanings To Respect:
 
-## Step [编号]: [标题]
-...
+## Execution Steps
+1. [action]
+2. [action]
+3. [verification]
 
-## Chunk 元信息
-```yaml
-phase: [编号]
-source: detail_plan.md
-tdd_granularity: step
-```
-```
+## Exit Criteria
+- [observable condition]
 
----
-
-## 示例
-
-**输入：** detail_plan.md 中 Phase 1 的内容：
-```markdown
-## Chunk 1: 用户认证
-
-### 组件 1.1: NextAuth 配置
-
-**文件：**
-- Create: `auth.ts`
-
-**Step 1:** 安装 NextAuth 并配置 Google Provider
-```bash
-npm install next-auth@beta
+## Current Risks / Notes
+- [only if relevant]
 ```
 
-**Step 2:** 创建 auth.ts 配置文件
-```typescript
-import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
+## Extraction Heuristics
 
-export const authOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-  ],
-}
+### For Greenfield Work
+Highlight:
+- the first observable behavior
+- the smallest useful vertical slice
+- the narrowest verification command
+- any term or integration claim that the implementation must not silently reinterpret
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
-```
-```
+### For Bugfix Work
+Highlight:
+- reproduction step
+- failing regression test
+- root-cause checkpoint
+- minimal fix boundary
+- any recheck-required knowledge if the bug may involve changed external behavior
 
-**输出：** step_subplan_phase1.md：
-```markdown
-# Phase 1: 用户认证 — Step Subplan
+### For Refactor Work
+Highlight:
+- preservation checks
+- safety boundary
+- incremental migration steps
+- any external assumptions that must remain true during migration
 
-> **来源：** detail_plan.md
+## Audit Carry-Forward Rules
 
-## Step 1.1: 安装 NextAuth 并配置 Google Provider
+If a phase still depends on external knowledge, the subplan must show one of these states explicitly:
+- `verified_official`
+- `verified_recent`
+- `unresolved`
+- `stale_recheck_required`
 
-**命令：**
-```bash
-npm install next-auth@beta
-```
+If the detail plan says a term or external claim is unresolved, the subplan must not phrase the step as if that uncertainty disappeared.
 
-### TDD 循环
-- [ ] **RED:** 写失败的测试
-  ```typescript
-  // 测试 NextAuth 安装
-  ```
-- [ ] **GREEN:** 运行测试验证失败
-  ```bash
-  npm test -- --grep "NextAuth"
-  ```
-- [ ] **GREEN:** 写最小实现代码
-  ```bash
-  npm install next-auth@beta
-  ```
-- [ ] **GREEN:** 运行测试验证通过
-  ```bash
-  npm test -- --grep "NextAuth"
-  ```
-- [ ] **COMMIT:** 提交
-  ```bash
-  git add . && git commit -m "feat: install next-auth"
-  ```
+If execution introduces a new suspicious term later, repair the plan and findings rather than quietly editing the subplan in isolation.
 
-## Step 1.2: 创建 auth.ts 配置文件
-**文件：**
-- Create: `auth.ts`
+## Self-Check
 
-### TDD 循环
-- [ ] **RED:** 写失败的测试
-- [ ] **GREEN:** 运行测试验证失败
-- [ ] **GREEN:** 写最小实现代码
-  ```typescript
-  import NextAuth from "next-auth"
-  import GoogleProvider from "next-auth/providers/google"
-
-  export const authOptions = {
-    providers: [
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      }),
-    ],
-  }
-
-  const handler = NextAuth(authOptions)
-  export { handler as GET, handler as POST }
-  ```
-- [ ] **GREEN:** 运行测试验证通过
-- [ ] **COMMIT:** 提交
-  ```bash
-  git add . && git commit -m "feat: add auth config with Google provider"
-  ```
-
-## Chunk 元信息
-```yaml
-phase: 1
-source: detail_plan.md
-tdd_granularity: step
-```
-```
-
----
-
-## 执行步骤
-
-1. 读取 `docs/plan-for-all/plans/` 下的 detail_plan.md
-2. 找到 `## Chunk N:` 或 `## Phase N:` 开头的章节
-3. 提取该 Phase 下的所有组件和 Step
-4. 按上述格式生成 step_subplan_phase{N}.md
-5. 保存到 `docs/plan-for-all/plans/step_subplans/`
+Before saving the subplan, verify:
+- the subplan starts with the required `plan-for-all:test-driven-development` skill banner
+- the objective is obvious in under 10 seconds
+- the verification step is visible without scrolling through implementation detail
+- nothing essential was lost
+- verbosity is lower than the detail plan
+- active knowledge blockers are still visible when relevant
+- the subplan is suitable for a fresh execution session
