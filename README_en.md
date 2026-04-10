@@ -246,15 +246,23 @@ See:
 
 ## Installation & Usage
 
-This project is now a Claude Code plugin with an agent entrypoint.
+This project is now both a Claude Code plugin with an agent entrypoint and a single-plugin marketplace source.
 
-Load locally with:
+### Option 1: local plugin development load
+
+From the parent directory of this repository:
 
 ```bash
-claude --plugin-dir ./plan-for-all-skill
+claude --plugin-dir ./plan-for-all
 ```
 
-After load, run:
+Or from the repository root:
+
+```bash
+claude --plugin-dir .
+```
+
+After loading, run:
 
 ```bash
 /reload-plugins
@@ -262,6 +270,49 @@ After load, run:
 ```
 
 `plan-for-all` is set as default agent via `settings.json`.
+
+### Option 2: local marketplace install test
+
+Add this repository as a marketplace inside Claude Code:
+
+```bash
+/plugin marketplace add ./plan-for-all
+/plugin install plan-for-all@plan-for-all-marketplace
+```
+
+After installation, run:
+
+```bash
+/reload-plugins
+/agents
+```
+
+### Option 3: remote marketplace install
+
+Current GitHub repository:
+
+`https://github.com/mengsi16/plan-for-all`
+
+Users can add this marketplace directly with:
+
+```bash
+claude plugin marketplace add mengsi16/plan-for-all
+```
+
+Then install the plugin with:
+
+```bash
+/plugin install plan-for-all@plan-for-all-marketplace
+```
+
+Full remote installation flow:
+
+```bash
+claude plugin marketplace add mengsi16/plan-for-all
+/plugin install plan-for-all@plan-for-all-marketplace
+/reload-plugins
+/agents
+```
 
 ---
 

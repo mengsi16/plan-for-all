@@ -1,0 +1,33 @@
+{
+  "name": "plan-for-all-marketplace",
+  "owner": {
+    "name": "plan-for-all contributors"
+  },
+  "metadata": {
+    "description": "Marketplace for the Plan-for-All Claude Code plugin",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "plan-for-all",
+      "source": "./",
+      "description": "Plan-for-all orchestrator plugin with agent + planning skills",
+      "version": "2.0.0",
+      "author": {
+        "name": "plan-for-all contributors"
+      },
+      "keywords": [
+        "planning",
+        "tdd",
+        "agents",
+        "workflow"
+      ],
+      "category": "productivity",
+      "tags": [
+        "planning",
+        "workflow",
+        "claude-code"
+      ]
+    }
+  ]
+}
