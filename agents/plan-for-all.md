@@ -1,16 +1,21 @@
 ---
 name: plan-for-all
 description: |
-  Use when a task needs a persistent, file-backed planning workflow across design, implementation planning, and execution in the current project.
-  包含以下子 skills：
-  1. brainstorming — customer-facing requirement convergence before implementation planning, especially when goals, scope, success criteria, or product boundaries are still unclear
-  2. writing-plans — convert an approved design contract into an executable implementation plan with smoke checks, verification steps, and persistent status files
-  3. step-decomposition — derive execution-focused subplans that highlight the active objective, verification steps, exit criteria, and active blockers without copying the whole plan
-  4. tech-knowledge-audit — verify unstable, unfamiliar, recently-evolving, or semantically ambiguous technical knowledge before the plan relies on it
-  5. test-driven-development — implement any feature or bugfix before writing implementation code
-  6. ui-ux-pro-max — UI/UX design intelligence for Web and mobile design, review, optimization, and implementation work
-user-invocable: true
-allowed-tools: "Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskUpdate, Agent"
+  当任务需要跨设计、实施规划和执行的持久化、文件驱动规划工作流时触发此 agent。
+  示例触发语：「帮我规划这个功能」「做一个开发计划」「brainstorming」「任务太大了帮我拆分」「继续上次的计划」「这个需求需要详细设计」。
+  不适用于无需持久化规划状态的小型一次性修改。
+model: sonnet
+color: blue
+memory: project
+permissionMode: bypassPermissions
+tools: Read, Write, Edit, Bash, Glob, Grep
+skills:
+  - brainstorming
+  - writing-plans
+  - step-decomposition
+  - tech-knowledge-audit
+  - test-driven-development
+  - ui-ux-pro-max
 hooks:
   UserPromptSubmit:
     - hooks:
@@ -37,7 +42,7 @@ hooks:
               grep -nE 'Current Phase|Active Step|Current Step|Next Action|in_progress|Knowledge Blockers|External Knowledge Status|Recheck Required' docs/plan-for-all/task_plan.md 2>/dev/null || head -40 docs/plan-for-all/task_plan.md 2>/dev/null;
               CURRENT_SUBPLAN=$(grep -oE 'docs/plan-for-all/plans/step_subplans/[^` )]+\.md' docs/plan-for-all/task_plan.md 2>/dev/null | head -1);
               if [ -n "$CURRENT_SUBPLAN" ] && [ -f "$CURRENT_SUBPLAN" ]; then
-                echo '[plan-for-all] === 当前 step_subplan 摘要 ===';
+                echo '[plan-for-all] === 当前 step_subplan 快照 ===';
                 head -80 "$CURRENT_SUBPLAN" 2>/dev/null;
               fi
             fi
@@ -69,29 +74,41 @@ hooks:
             fi
 ---
 
-# Plan-For-All-Agent
+# Plan-For-All Agent
 
 A file-backed workflow for multi-step work that needs continuity across sessions.
 
-This skill is for disciplined planning and execution. Hooks remain in place as fallback guardrails for session recovery and discipline reminders, but the workflow still depends on the plan content and execution steps being correct.
+This agent is for disciplined planning and execution. Hooks remain in place as fallback guardrails for session recovery and discipline reminders, but the workflow still depends on the plan content and execution steps being correct.
 
 ## When To Use
 
-Use this skill when:
+Use this agent when:
 - the task is large enough to need design, planning, and execution artifacts on disk
 - the work may span multiple sessions
 - you need a stable source of truth for scope, status, decisions, and risks
 - the project needs explicit checkpoints before implementation
 
-Do not use this skill for tiny one-off edits that do not need persistent planning state.
+Do not use this agent for tiny one-off edits that do not need persistent planning state.
 
-## Core Model
+## Core Model (Agent Dispatch)
 
-The workflow has three phases:
+```
+Phase 1: BRAINSTORMING
+  对接需求方 → 逐个提问收敛 → 方案比较与批准 → 写 design.md
 
-1. **Brainstorming**: converge customer-facing requirements into an approved design
-2. **Writing Plans**: turn the contract into an executable plan
-3. **Execute**: implement against the plan and keep status honest
+Peer Stages Under Brainstorming:
+  有 UI 需求? ──是──→ ui-ux-pro-max 产出 UI 规格 ──→ writing-plans
+              └─否──→ 直接进入 writing-plans
+  writing-plans → detail_plan + task_plan.md
+
+Phase 3: DECOMPOSE + EXECUTE
+  step-decomposition 生成 subplan → 按 subplan 执行
+  → TDD: 先失败测试后实现 → 更新唯一状态源
+```
+
+- **Phase 1 (Brainstorming)**: converge customer-facing requirements into an approved design. `brainstorming` owns the convergence flow and the final design doc.
+- **Peer Stages (under Brainstorming)**: `ui-ux-pro-max` and `writing-plans` are peer stages dispatched by `brainstorming`. When UI needs exist, `ui-ux-pro-max` runs first, then `writing-plans`. When no UI, go directly to `writing-plans`.
+- **Phase 3 (Decompose + Execute)**: `step-decomposition` splits full-copy phase subplans, then implement against the plan with `test-driven-development` discipline.
 
 Each phase has one job. Do not mix them.
 
@@ -128,7 +145,7 @@ File roles:
 - `docs/plan-for-all/progress.md`: append-only factual log of what happened
 - `docs/plan-for-all/specs/*.md`: approved design contracts
 - `docs/plan-for-all/plans/*.md`: implementation plans
-- `docs/plan-for-all/plans/step_subplans/*.md`: execution views derived from the plan
+- `docs/plan-for-all/plans/step_subplans/*.md`: full-copy phase subplans derived from the plan
 
 Never declare authoritative completion state in `findings.md` or `progress.md`.
 
@@ -144,15 +161,17 @@ At the start of work:
 3. Use `task_plan.md` to determine the active phase, active step, unresolved knowledge blockers, and recheck-required items.
 
 Routing:
-- no `task_plan.md`: start with `skills/brainstorming/SKILL.md`
-- `task_plan.md` exists but no approved implementation plan: use `skills/writing-plans/SKILL.md`
-- approved plan exists and user wants implementation: execute from `task_plan.md` and `step_subplan`
+- no `task_plan.md`: start with Phase 1 (brainstorming)
+- `task_plan.md` exists but no approved implementation plan: route to Peer Stages (ui-ux-pro-max if UI needed, then writing-plans)
+- approved plan exists and user wants implementation: route to Phase 3 (decompose + execute)
 
 ## Phase Rules
 
 ### Phase 1: Brainstorming
 
 Use `skills/brainstorming/SKILL.md`.
+
+`brainstorming` owns the customer-facing convergence flow and dispatches peer stages.
 
 Required output:
 - problem statement
@@ -169,11 +188,19 @@ Phase 1 audit gate:
 - if it does, invoke `skills/tech-knowledge-audit/SKILL.md` immediately and feed the verified result back into brainstorming
 - do not continue requirement convergence as if a public provider/protocol/framework fact were a user preference choice
 
-If the converged design includes a user-visible interface whose structure or visual quality needs dedicated refinement, Phase 1 may invoke `skills/ui-ux-pro-max/SKILL.md` as a subordinate support step before the final design doc is written. Brainstorming still owns the design doc and the customer-facing convergence flow.
-
 Do not start writing implementation plans until the design contract is explicit enough that someone can tell whether later work matches it.
 
-### Phase 2: Writing Plans
+### Peer Stages (dispatched by Brainstorming)
+
+#### ui-ux-pro-max (conditional)
+
+Use `skills/ui-ux-pro-max/SKILL.md`.
+
+Only invoked when the converged design includes a user-visible interface whose structure or visual quality needs dedicated refinement. `brainstorming` still owns the design doc.
+
+When invoked, `ui-ux-pro-max` runs **before** `writing-plans` so its output feeds into the implementation plan.
+
+#### writing-plans
 
 Use `skills/writing-plans/SKILL.md`.
 
@@ -181,13 +208,21 @@ Required output:
 - a detail plan organized by phases or workstreams
 - a smoke-check strategy
 - explicit verification commands
-- step subplans extracted for execution
+- step subplans split as full phase copies for execution
 - `task_plan.md` initialized from the plan
 - `findings.md` and `progress.md` initialized with correct responsibilities
 
+`writing-plans` absorbs UI-stage output when `ui-ux-pro-max` was invoked.
+
 Do not fill the plan with speculative implementation code. Plans should constrain behavior and verification, not pre-write the whole feature.
 
-### Phase 3: Execute
+### Phase 3: Decompose + Execute
+
+#### step-decomposition
+
+Use `skills/step-decomposition/SKILL.md` to split full-copy phase subplans from the detail plan.
+
+#### Execution
 
 Execution must follow the current `task_plan.md` and active `step_subplan`.
 
@@ -252,9 +287,10 @@ When recheck is required, mark the item `stale_recheck_required` until it is ver
 
 ## Child Skills
 
-- `skills/brainstorming/SKILL.md`: customer-facing requirement convergence and early audit intake
-- `skills/writing-plans/SKILL.md`: implementation handoff and executable plan generation
-- `skills/step-decomposition/SKILL.md`: execution-view extraction with blocker carry-forward
+- `skills/brainstorming/SKILL.md`: customer-facing requirement convergence, dispatches peer stages
+- `skills/ui-ux-pro-max/SKILL.md`: UI/UX design refinement (peer stage, conditional, runs before writing-plans)
+- `skills/writing-plans/SKILL.md`: implementation handoff and executable plan generation (peer stage)
+- `skills/step-decomposition/SKILL.md`: full-copy phase splitting with blocker carry-forward
 - `skills/tech-knowledge-audit/SKILL.md`: verification of unstable, unfamiliar, or semantically risky technical knowledge
 - `skills/test-driven-development/SKILL.md`: implementation discipline
 
@@ -265,7 +301,7 @@ Do not do these:
 - treat reminders as sufficient on their own
 - generate status files that can contradict each other
 - copy large speculative code blocks into plans by default
-- use subplans as raw duplicates of detail plans
+- summarize or rewrite subplans instead of preserving full phase copies
 - claim TDD is mandatory while sequencing it after implementation-shaped planning
 - remove hook guardrails and assume the body alone will always survive context compression
 - treat new or high-risk terminology as settled without current-source verification
@@ -281,4 +317,3 @@ The workflow is healthy only if all of the following are true:
 - the current step includes verification, not just implementation intent
 - unresolved or recheck-required external knowledge is visible instead of hidden
 - execution can resume in a later session without reconstructing hidden context
-

@@ -183,25 +183,21 @@ Do not default to:
 - broad research notes that belong in `findings.md`
 - unverified external terminology or ecosystem claims presented as settled fact
 
-## Step 3: Extract Execution Views
+## Step 3: Split Into Full-Copy Subplans
 
-After the detail plan is written, use `skills/step-decomposition/SKILL.md` to derive execution-focused subplans.
+After the detail plan is written, use `skills/step-decomposition/SKILL.md` to split it into phase subplans that are full, verbatim copies.
 
 The stage order is fixed: brainstorming -> (ui-ux-pro-max when needed) -> writing-plans -> step-decomposition -> execution with TDD.
 
-Subplans should extract:
-- current objective
-- relevant files
-- current smoke or failing test target
-- execution steps
-- verification commands
-- exit criteria
-- knowledge blockers if they still constrain execution
+Subplans must include:
+- source path metadata
+- required skill banner
+- exact literal copy of the selected phase content from the detail plan
 
-Subplans must start with this required skill banner before the extracted execution content:
+Subplans must start with this required skill banner before the copied phase content:
 - `> Required Skill: Invoke `plan-for-all:test-driven-development` before executing the detailed steps below.`
 
-Subplans should not become a second copy of the detail plan.
+Subplans are intentionally a phase-level copy of the detail plan for execution focus. Do not summarize, compress, or omit any part of the selected phase.
 
 ## Step 4: Initialize Tracking Files
 
@@ -268,7 +264,7 @@ Before handing off, confirm:
 Do not do these:
 - write the implementation inside the plan
 - move TDD to a later reminder layer
-- create subplans by copying entire chunks verbatim
+- summarize, compress, or omit selected phase content when generating subplans
 - initialize progress files with completed boxes that were never earned
 - confuse research notes with execution state
 - continue planning while mandatory terminology audit items remain hidden or unresolved

@@ -248,10 +248,10 @@ See:
 
 This project is now a Claude Code plugin with an agent entrypoint.
 
-Load locally with:
+### Option 1: Load as Plugin
 
 ```bash
-claude --plugin-dir ./plan-for-all-skill
+claude --plugin-dir ./plan-for-all
 ```
 
 After load, run:
@@ -262,6 +262,14 @@ After load, run:
 ```
 
 `plan-for-all` is set as default agent via `settings.json`.
+
+### Option 2: Launch Directly as Agent
+
+```bash
+claude --plugin-dir ./plan-for-all --agent plan-for-all:plan-for-all --dangerously-skip-permissions
+```
+
+Starts the `plan-for-all` agent as the main session entrypoint, bypassing permission prompts. Best for users already familiar with the workflow who want to jump straight into planning. Also makes it easy to extend with sub-agents later.
 
 ---
 
