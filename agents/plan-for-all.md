@@ -222,6 +222,10 @@ Do not fill the plan with speculative implementation code. Plans should constrai
 
 Use `skills/step-decomposition/SKILL.md` to split full-copy phase subplans from the detail plan.
 
+When available, run deterministic splitting first:
+
+`powershell -ExecutionPolicy Bypass -File plan-for-all/scripts/split-step-subplans-verbatim.ps1 -DetailPlanPath docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
+
 #### Execution
 
 Execution must follow the current `task_plan.md` and active `step_subplan`.

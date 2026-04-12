@@ -199,6 +199,10 @@ Subplans must start with this required skill banner before the copied phase cont
 
 Subplans are intentionally a phase-level copy of the detail plan for execution focus. Do not summarize, compress, or omit any part of the selected phase.
 
+Preferred command for deterministic output:
+
+`powershell -ExecutionPolicy Bypass -File plan-for-all/scripts/split-step-subplans-verbatim.ps1 -DetailPlanPath docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
+
 ## Step 4: Initialize Tracking Files
 
 ### `task_plan.md`

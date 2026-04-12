@@ -34,6 +34,14 @@ Every generated subplan must start with a TDD guard banner that uses the skill n
 
 This stage runs after `writing-plans` and before execution.
 
+## Deterministic Generation (Preferred)
+
+To avoid accidental summarization by free-form generation, prefer deterministic splitting with:
+
+`powershell -ExecutionPolicy Bypass -File plan-for-all/scripts/split-step-subplans-verbatim.ps1 -DetailPlanPath docs/plan-for-all/plans/YYYY-MM-DD-<topic>-detail.md`
+
+If deterministic generation is available, use it first and only do manual fallback when the script cannot run.
+
 ## Extraction Rules
 
 - **Copy everything explicitly**: The subplan must be a full, exact copy of the phase's content from the detailed plan.
