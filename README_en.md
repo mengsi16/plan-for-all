@@ -275,6 +275,7 @@ Add this repository as a marketplace inside Claude Code:
 ```bash
 claude plugin marketplace add ./plan-for-all
 claude plugin install plan-for-all@plan-for-all-marketplace
+claude --agent plan-for-all:plan-for-all --dangerously-skip-permissions
 ```
 
 
