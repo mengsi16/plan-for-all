@@ -1,6 +1,6 @@
 ﻿---
 name: step-decomposition
-description: Use when a detail implementation plan needs to be split into completely separated subplans for execution. The subplan must be a full, verbatim copy of the phase from the detail plan, without any summarization or omission.
+description: "Use when a detail implementation plan needs to be split into completely separated subplans for execution. The subplan must be a full, verbatim copy of the phase from the detail plan, without any summarization or omission."
 ---
 
 # Step Decomposition
